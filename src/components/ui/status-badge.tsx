@@ -9,7 +9,7 @@ const statusConfig: Record<
   }
 > = {
   working: { label: "Working", variant: "default" },
-  stale: { label: "Stale", variant: "secondary" },
+  waiting: { label: "Waiting", variant: "secondary" },
   unknown: { label: "Unknown", variant: "destructive" },
 };
 

@@ -6,7 +6,7 @@ function seededRandom(seed: number): () => number {
   };
 }
 
-export type ProviderStatus = "working" | "stale" | "unknown";
+export type ProviderStatus = "working" | "waiting" | "unknown";
 export type ProviderType =
   | "storage"
   | "compute"
@@ -23,6 +23,8 @@ export interface Provider {
   status: ProviderStatus;
   last_seen: string | null;
   latency_ms: number | null;
+  yagna_running: boolean;
+  provider_running: boolean;
   notes?: string;
 }
 
@@ -113,7 +115,7 @@ function generateProviders(
       latency_ms = Math.floor(rng() * 100) + 5;
       last_seen = generateDate(rng, baseDate, 5); // within last 5 minutes
     } else if (statusRoll < 0.9) {
-      status = "stale";
+      status = "waiting";
       last_seen = generateDate(rng, baseDate, 120); // within last 2 hours
       notes = STALE_NOTES[Math.floor(rng() * STALE_NOTES.length)];
     } else {
@@ -136,6 +138,10 @@ function generateProviders(
       last_seen,
       latency_ms,
       ...(notes && { notes }),
+      yagna_running: status === "working" || (status === "waiting" && rng() > 0.5),
+      provider_running:
+        status === "working" ||
+        (status === "waiting" && rng() > 0.3),
     });
   }
 
@@ -144,7 +150,7 @@ function generateProviders(
 
 function calculateSummary(providers: Provider[]): MachineSummary {
   const working = providers.filter((p) => p.status === "working").length;
-  const stale = providers.filter((p) => p.status === "stale").length;
+  const stale = providers.filter((p) => p.status === "waiting").length;
   const unknown = providers.filter((p) => p.status === "unknown").length;
   const total = providers.length;
 
@@ -221,14 +227,26 @@ export function getMachine(machineId: string): Machine | null {
   return toMachine(getOrGenerateMachine(index));
 }
 
-export function getMachineProviders(machineId: string): Provider[] | null {
+export async function getMachineProviders(machineId: string): Promise<Provider[] | null> {
   const match = machineId.match(/^machine-(\d+)$/);
   if (!match) return null;
 
-  const index = parseInt(match[1], 10);
-  if (index < 0 || index >= TOTAL_MACHINES) return null;
+  const secret = window.localStorage.getItem("secret_token");
+  const query = await fetch(`https://rock.vanity.market/${secret}/process_info.json`);
+  const json = await query.json();
 
-  return getOrGenerateMachine(index).providers;
+  const providers = json as Provider[];
+
+
+  //const providers = [];
+  if (!providers) {
+    throw new Error(`Machine ${machineId} not found`);
+  }
+
+  for (let i = 0; i < providers.length; i++) {
+    console.log(providers[i]);
+  }
+  return providers;
 }
 
 export function getMachineWithProviders(

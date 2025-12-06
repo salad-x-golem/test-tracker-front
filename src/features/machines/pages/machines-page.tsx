@@ -62,7 +62,7 @@ const columns: Column<Machine>[] = [
   },
   {
     key: "summary.stale",
-    header: "Stale",
+    header: "Waiting",
     sortable: true,
     render: (machine) => (
       <span className="text-yellow-600 dark:text-yellow-400">

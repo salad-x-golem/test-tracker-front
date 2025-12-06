@@ -39,8 +39,8 @@ export const machineQueryOptions = (machineId: string) =>
 export const machineProvidersQueryOptions = (machineId: string) =>
   queryOptions({
     queryKey: machineKeys.providers(machineId),
-    queryFn: () => {
-      const providers = getMachineProviders(machineId);
+    queryFn: async () => {
+      const providers = await getMachineProviders(machineId);
       if (!providers) {
         throw new Error(`Machine ${machineId} not found`);
       }

@@ -25,6 +25,18 @@ const columns: Column<Provider>[] = [
     ),
   },
   {
+    key: "yagna_running",
+    header: "Yagna",
+    sortable: true,
+    render: (provider) => provider.yagna_running ? <div>1</div> : <div>0</div>,
+  },
+  {
+    key: "provider_running",
+    header: "Provider",
+    sortable: true,
+    render: (provider) => provider.provider_running ? <div>1</div> : <div>0</div>,
+  },
+  {
     key: "type",
     header: "Type",
     sortable: true,
@@ -66,6 +78,7 @@ const columns: Column<Provider>[] = [
 
 export function MachineDetailPage() {
   const { machineId } = useParams<{ machineId: string }>();
+
   const {
     data: machine,
     isLoading: machineLoading,
@@ -99,8 +112,8 @@ export function MachineDetailPage() {
     filteredCount,
   } = useTableState({
     data: providers,
-    searchFields: ["id", "type", "status", "notes"] as const,
-    pageSize: 20,
+    searchFields: ["id", "yagna_running", "provider_running", "type", "status", "notes"] as const,
+    pageSize: 500,
   });
 
   if (machineError || providersError) {
