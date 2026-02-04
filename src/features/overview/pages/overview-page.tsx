@@ -1,4 +1,5 @@
 import {useEffect, useState} from "react";
+import {useNavigate} from "react-router-dom";
 
 type TestType = {
   id: number;
@@ -13,7 +14,7 @@ export function OverviewPage() {
   const [tests, setTests] = useState<TestType[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
+  const navigateTo = useNavigate();
   useEffect(() => {
     const controller = new AbortController();
     const url = "https://tracker.arkiv-global.net/public/test/list";
@@ -84,7 +85,10 @@ export function OverviewPage() {
 
                     return (
                       <tr key={t.id}>
-                        <td className="px-4 py-2 text-sm text-gray-800">{t.name} ({parameters["runs-on"]})</td>
+                        <td className="px-4 py-2 text-sm text-gray-800">
+                          <a href={"/test/" + encodeURIComponent(t.name)} className="text-blue-600 hover:underline">
+                          {t.name} ({parameters["runs-on"]})</a>
+                        </td>
                         <td className="px-4 py-2 text-sm text-gray-700">{formatDate(t.startedAt)}</td>
                         <td className="px-4 py-2 text-sm text-gray-700">{formatDate(t.finishedAt)}</td>
                         <td className="px-4 py-2 text-sm text-gray-800">{parameters["test-length"]}s ({realTime}s)</td>
