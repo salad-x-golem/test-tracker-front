@@ -3,7 +3,7 @@ import {useEffect, useState} from "react";
 type TestType = {
   id: number;
   name: string;
-  createdAt: Date | null;
+  createdAt: Date;
   startedAt: Date | null;
   finishedAt: Date | null;
   params: string;
@@ -28,6 +28,7 @@ export function OverviewPage() {
         const parsed: TestType[] = (Array.isArray(data) ? data : []).map((item: any) => ({
           id: Number(item.id),
           name: String(item.name ?? ""),
+          createdAt: item.createdAt,
           startedAt: item.startedAt ? new Date(item.startedAt) : null,
           finishedAt: item.finishedAt ? new Date(item.finishedAt) : null,
           params: String(item.params ?? ""),
