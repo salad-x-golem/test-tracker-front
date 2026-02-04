@@ -25,7 +25,7 @@ export function OverviewPage() {
         const res = await fetch(url, {signal: controller.signal});
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        const parsed: TestType[] = (Array.isArray(data) ? data : []).map((item: any) => ({
+        const parsed: TestType[] = (Array.isArray(data) ? data : []).map((item: Record<string, any>) => ({
           id: Number(item.id),
           name: String(item.name ?? ""),
           createdAt: item.createdAt,
