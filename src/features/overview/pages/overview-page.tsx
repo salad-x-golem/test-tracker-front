@@ -83,7 +83,7 @@ export function OverviewPage() {
                         <td className="px-4 py-2 text-sm text-gray-700">{formatDate(t.finishedAt)}</td>
                         <td className="px-4 py-2 text-sm text-gray-800">{parameters["test-length"]}s</td>
                         <td className="px-4 py-2 text-sm text-gray-800">
-                          {t.finishedAt
+                          {(t.startedAt && t.finishedAt)
                             ? `${Math.max(0, Math.round((t.finishedAt.getTime() - t.startedAt.getTime()) / 1000))}s`
                             : `${parameters["test-length"]}s`}
                         </td>
