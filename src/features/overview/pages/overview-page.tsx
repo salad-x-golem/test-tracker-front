@@ -1,5 +1,4 @@
 import {useEffect, useState} from "react";
-import {useNavigate} from "react-router-dom";
 
 type TestType = {
   id: number;
@@ -14,7 +13,6 @@ export function OverviewPage() {
   const [tests, setTests] = useState<TestType[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const navigateTo = useNavigate();
   useEffect(() => {
     const controller = new AbortController();
     const url = "https://tracker.arkiv-global.net/public/test/list";
