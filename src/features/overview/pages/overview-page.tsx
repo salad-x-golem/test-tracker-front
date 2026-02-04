@@ -68,7 +68,7 @@ export function OverviewPage() {
                 <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Test Name (machine)</th>
                 <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Started</th>
                 <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Finished</th>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Planned length</th>
+                <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Planned test time (real)</th>
               </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
