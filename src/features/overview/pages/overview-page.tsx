@@ -74,7 +74,6 @@ export function OverviewPage() {
               <tbody className="bg-white divide-y divide-gray-200">
               {tests.map((t) => {
                   try {
-                    console.log(t.params);
                     const parameters = JSON.parse(t.params);
                     let realTime = 0;
                     if (t.startedAt && t.finishedAt) {
