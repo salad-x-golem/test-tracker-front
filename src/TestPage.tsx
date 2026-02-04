@@ -37,8 +37,10 @@ const TestPage: React.FC = () => {
                     params: String(item.params ?? ""),
                 };
                 setTest(parsed);
-            } catch (err: any) {
-                if (err.name !== "AbortError") setError(err.message ?? "Failed to load tests");
+            } catch (err: unknown) {
+                if (err instanceof Error && err.name !== "AbortError") {
+                    setError(err.message ?? "Failed to load tests");
+                }
             } finally {
                 setLoading(false);
             }
@@ -46,36 +48,181 @@ const TestPage: React.FC = () => {
 
         load();
         return () => controller.abort();
-    }, []);
+    }, [testName]);
 
+    const getStatus = () => {
+        if (!test) return null;
+        if (test.finishedAt) return {label: 'Completed', color: '#10b981', bg: '#d1fae5'};
+        if (test.startedAt) return {label: 'Running', color: '#f59e0b', bg: '#fef3c7'};
+        return {label: 'Pending', color: '#6b7280', bg: '#f3f4f6'};
+    };
 
+    const status = getStatus();
     const displayName = testName ? decodeURIComponent(testName) : 'No testName provided';
 
-    return (
-        <div style={{padding: 20}}>
-            <h1>Test Page</h1>
-            <p>
-                <strong>testName:</strong> {displayName}
-            </p>
-            {loading && <p>Loading...</p>}
-            {error && <p style={{color: 'red'}}>Error: {error}</p>}
-            {test && (
-                <div>
-                    <h2>Test Details:</h2>
-                    <p><strong>ID:</strong> {test.id}</p>
-                    <p><strong>Name:</strong> {test.name}</p>
-                    <p><strong>Created At:</strong> {new Date(test.createdAt).toLocaleString()}</p>
-                    <p><strong>Started At:</strong> {test.startedAt ? new Date(test.startedAt).toLocaleString() : 'N/A'}</p>
-                    <p><strong>Finished At:</strong> {test.finishedAt ? new Date(test.finishedAt).toLocaleString() : 'N/A'}</p>
-                    <p><strong>Params:</strong> {test.params}</p>
-                </div>
-            )}
+    const styles = {
+        container: {
+            minHeight: '100vh',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            padding: '40px 20px',
+            fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+        },
+        card: {
+            maxWidth: 600,
+            margin: '0 auto',
+            background: '#fff',
+            borderRadius: 16,
+            boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+            overflow: 'hidden',
+        },
+        header: {
+            background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
+            color: '#fff',
+            padding: '30px',
+            textAlign: 'center' as const,
+        },
+        title: {margin: 0, fontSize: 28, fontWeight: 600},
+        subtitle: {margin: '8px 0 0', opacity: 0.8, fontSize: 14},
+        badge: (bg: string, color: string) => ({
+            display: 'inline-block',
+            padding: '6px 16px',
+            borderRadius: 20,
+            background: bg,
+            color: color,
+            fontWeight: 600,
+            fontSize: 12,
+            marginTop: 16,
+        }),
+        body: {padding: 30},
+        row: {
+            display: 'flex',
+            justifyContent: 'space-between',
+            padding: '16px 0',
+            borderBottom: '1px solid #e5e7eb',
+        },
+        label: {color: '#6b7280', fontSize: 14, fontWeight: 500},
+        value: {color: '#111827', fontSize: 14, fontWeight: 600, textAlign: 'right' as const},
+        paramsBox: {
+            background: '#f9fafb',
+            borderRadius: 8,
+            padding: 16,
+            marginTop: 20,
+            fontFamily: 'monospace',
+            fontSize: 13,
+            wordBreak: 'break-all' as const,
+        },
+        button: {
+            width: '100%',
+            padding: '14px',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            color: '#fff',
+            border: 'none',
+            borderRadius: 8,
+            fontSize: 16,
+            fontWeight: 600,
+            cursor: 'pointer',
+            marginTop: 24,
+        },
+        loader: {
+            textAlign: 'center' as const,
+            padding: 60,
+            color: '#fff',
+            fontSize: 18,
+        },
+        error: {
+            maxWidth: 600,
+            margin: '0 auto',
+            background: '#fef2f2',
+            border: '1px solid #fecaca',
+            borderRadius: 12,
+            padding: 24,
+            textAlign: 'center' as const,
+            color: '#dc2626',
+        },
+    };
 
-            <button onClick={() => navigate(-1)}>Go Back</button>
+    if (loading) {
+        return (
+            <div style={styles.container}>
+                <div style={styles.loader}>
+                    <div style={{fontSize: 40, marginBottom: 16}}>⏳</div>
+                    Loading test data...
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div style={styles.container}>
+                <div style={styles.error}>
+                    <div style={{fontSize: 40, marginBottom: 16}}>⚠️</div>
+                    <strong>Error:</strong> {error}
+                    <button style={{...styles.button, marginTop: 20}} onClick={() => navigate(-1)}>
+                        Go Back
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div style={styles.container}>
+            <div style={styles.card}>
+                <div style={styles.header}>
+                    <h1 style={styles.title}>{displayName}</h1>
+                    <p style={styles.subtitle}>Test #{test?.id}</p>
+                    {status && (
+                        <span style={styles.badge(status.bg, status.color)}>
+                            {status.label}
+                        </span>
+                    )}
+                </div>
+
+                {test && (
+                    <div style={styles.body}>
+                        <div style={styles.row}>
+                            <span style={styles.label}>📋 Name</span>
+                            <span style={styles.value}>{test.name}</span>
+                        </div>
+                        <div style={styles.row}>
+                            <span style={styles.label}>🆔 ID</span>
+                            <span style={styles.value}>{test.id}</span>
+                        </div>
+                        <div style={styles.row}>
+                            <span style={styles.label}>📅 Created</span>
+                            <span style={styles.value}>
+                                {new Date(test.createdAt).toLocaleString()}
+                            </span>
+                        </div>
+                        <div style={styles.row}>
+                            <span style={styles.label}>▶️ Started</span>
+                            <span style={styles.value}>
+                                {test.startedAt ? new Date(test.startedAt).toLocaleString() : '—'}
+                            </span>
+                        </div>
+                        <div style={{...styles.row, borderBottom: 'none'}}>
+                            <span style={styles.label}>✅ Finished</span>
+                            <span style={styles.value}>
+                                {test.finishedAt ? new Date(test.finishedAt).toLocaleString() : '—'}
+                            </span>
+                        </div>
+
+                        {test.params && (
+                            <>
+                                <div style={{...styles.label, marginTop: 20}}>⚙️ Parameters</div>
+                                <div style={styles.paramsBox}>{test.params}</div>
+                            </>
+                        )}
+
+                        <button style={styles.button} onClick={() => navigate(-1)}>
+                            ← Go Back
+                        </button>
+                    </div>
+                )}
+            </div>
         </div>
     );
 };
 
 export default TestPage;
-
-
