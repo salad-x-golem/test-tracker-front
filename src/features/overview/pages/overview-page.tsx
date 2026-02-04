@@ -76,17 +76,19 @@ export function OverviewPage() {
                   try {
                     console.log(t.params);
                     const parameters = JSON.parse(t.params);
+                    let realTime = 0;
+                    if (t.startedAt && t.finishedAt) {
+                      realTime = Math.max(0, Math.round((t.finishedAt.getTime() - t.startedAt.getTime()) / 1000))
+                    } else if (t.startedAt) {
+                      realTime = Math.max(0, Math.round(((new Date()).getTime() - t.startedAt.getTime()) / 1000))
+                    }
+
                     return (
                       <tr key={t.id}>
                         <td className="px-4 py-2 text-sm text-gray-800">{t.name} ({parameters["runs-on"]})</td>
                         <td className="px-4 py-2 text-sm text-gray-700">{formatDate(t.startedAt)}</td>
                         <td className="px-4 py-2 text-sm text-gray-700">{formatDate(t.finishedAt)}</td>
-                        <td className="px-4 py-2 text-sm text-gray-800">{parameters["test-length"]}s</td>
-                        <td className="px-4 py-2 text-sm text-gray-800">
-                          {(t.startedAt && t.finishedAt)
-                            ? `${Math.max(0, Math.round((t.finishedAt.getTime() - t.startedAt.getTime()) / 1000))}s`
-                            : `${parameters["test-length"]}s`}
-                        </td>
+                        <td className="px-4 py-2 text-sm text-gray-800">{parameters["test-length"]}s ({realTime}s)</td>
                       </tr>
                     )
                   } catch (e) {
