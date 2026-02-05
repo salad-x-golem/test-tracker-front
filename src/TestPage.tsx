@@ -1,6 +1,14 @@
 import React, {useEffect, useState} from 'react';
 import {useParams, useNavigate} from 'react-router-dom';
 
+
+type FileType = {
+    id: number;
+    originalName: string;
+    path: string;
+    testId: number;
+};
+
 type TestType = {
     id: number;
     name: string;
@@ -8,6 +16,7 @@ type TestType = {
     startedAt: Date | null;
     finishedAt: Date | null;
     params: string;
+    files: FileType[];
 };
 
 const TestPage: React.FC = () => {
@@ -35,6 +44,7 @@ const TestPage: React.FC = () => {
                     startedAt: item.startedAt ? new Date(item.startedAt) : null,
                     finishedAt: item.finishedAt ? new Date(item.finishedAt) : null,
                     params: String(item.params ?? ""),
+                    files: Array.isArray(item.files) ? item.files : [],
                 };
                 setTest(parsed);
             } catch (err: unknown) {
@@ -49,6 +59,11 @@ const TestPage: React.FC = () => {
         load();
         return () => controller.abort();
     }, [testName]);
+
+
+    const getDownloadUrl = (id: number) => {
+        return `https://tracker.arkiv-global.net/public/file/${id}/download`;
+    };
 
     const getStatus = () => {
         if (!test) return null;
@@ -139,6 +154,38 @@ const TestPage: React.FC = () => {
             textAlign: 'center' as const,
             color: '#dc2626',
         },
+        filesSection: {
+            marginTop: 24,
+            borderTop: '1px solid #e5e7eb',
+            paddingTop: 20,
+        },
+        filesList: {
+            listStyle: 'none',
+            padding: 0,
+            margin: '12px 0 0',
+        },
+        fileItem: {
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '12px 16px',
+            background: '#f9fafb',
+            borderRadius: 8,
+            marginBottom: 8,},
+        fileName: {
+            color: '#111827',
+            fontSize: 14,
+            fontWeight: 500,
+        },
+        downloadLink: {
+            color: '#667eea',
+            textDecoration: 'none',
+            fontSize: 14,
+            fontWeight: 600,
+            padding: '6px 12px',
+            background: '#eef2ff',
+            borderRadius: 6,
+        },
     };
 
     if (loading) {
@@ -213,6 +260,26 @@ const TestPage: React.FC = () => {
                                 <div style={{...styles.label, marginTop: 20}}>⚙️ Parameters</div>
                                 <div style={styles.paramsBox}>{test.params}</div>
                             </>
+                        )}
+
+                        {test.files && test.files.length > 0 && (
+                            <div style={styles.filesSection}>
+                                <div style={styles.label}>📁 Files ({test.files.length})</div>
+                                <ul style={styles.filesList}>
+                                    {test.files.map((file) => (
+                                        <li key={file.id} style={styles.fileItem}>
+                                            <span style={styles.fileName}>{file.originalName}</span>
+                                            <a
+                                                href={getDownloadUrl(file.id)}
+                                                style={styles.downloadLink}
+                                                download
+                                            >
+                                                ⬇️ Download
+                                            </a>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
                         )}
 
                         <button style={styles.button} onClick={() => navigate(-1)}>
