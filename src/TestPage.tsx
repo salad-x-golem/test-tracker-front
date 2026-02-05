@@ -311,9 +311,6 @@ const TestPage: React.FC = () => {
         return <div style={styles.body}>
             <div style={styles.row}>
                 <span style={styles.label}>Name</span>
-                <span>
-                    <a className="px-2 text-blue-600 hover:underline" href={getGrafanaLink(test)}>Grafana</a>
-                </span>
                 <span style={styles.value}>{test.name}</span>
             </div>
             <div style={styles.row}>
@@ -369,10 +366,28 @@ const TestPage: React.FC = () => {
                 <div style={styles.header}>
                     <h1 style={styles.title}>{displayName}</h1>
                     <p style={styles.subtitle}>Test #{test?.id}</p>
+
                     {status && (
                         <span style={styles.badge(status.bg, status.color, status.border)}>
                             {status.label}
                         </span>
+                    )}
+                    {test && (
+                        <a
+                            href={getGrafanaLink(test)}
+                            style={{
+                                marginLeft: 12,
+                                color: '#2563eb',
+                                textDecoration: 'none',
+                                fontSize: 13,
+                                fontWeight: 500,
+                                display: 'inline-block',
+                                marginTop: 8,
+                                marginRight: 8
+                            }}
+                        >
+                            Grafana
+                        </a>
                     )}
                 </div>
 

@@ -4,8 +4,8 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { to: "/", label: "Overview", icon: LayoutDashboard },
-  { to: "/machines", label: "Machines", icon: Server },
+  { to: "/", label: "History", icon: LayoutDashboard },
+  { to: "/details", label: "Details", icon: Server },
 ];
 
 interface AppLayoutProps {
@@ -22,7 +22,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         {/* Logo */}
         <div className="flex h-16 items-center gap-2 border-b px-6">
           <Server className="h-6 w-6" />
-          <span className="text-lg font-bold">System Dashboard</span>
+          <span className="text-lg font-bold">Test Tracker</span>
         </div>
 
         {/* Navigation */}
