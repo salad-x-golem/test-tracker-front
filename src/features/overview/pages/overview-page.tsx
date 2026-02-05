@@ -79,6 +79,7 @@ export function OverviewPage() {
                         <td className="px-4 py-2 text-sm text-gray-800">
                           <a href={"/test/" + encodeURIComponent(t.name)} className="text-blue-600 hover:underline">
                           {t.name} ({parameters["runs-on"]})</a>
+                          <a className="px-2 text-blue-600 hover:underline" href={"https://l2.arkiv-global.net/d/advfmrd/l2-tests?var-jobname=" + t.name + "&from=" + t.createdAt.toISOString()}>🔗 Grafana</a>
                         </td>
                         <td className="px-4 py-2 text-sm text-gray-700">{formatDate(t.startedAt)}</td>
                         <td className="px-4 py-2 text-sm text-gray-700">{formatDate(t.finishedAt)}</td>

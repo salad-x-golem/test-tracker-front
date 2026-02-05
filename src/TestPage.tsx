@@ -77,6 +77,9 @@ const TestPage: React.FC = () => {
     const getDownloadUrl = (id: number) => {
         return `https://tracker.arkiv-global.net/public/file/${id}/download`;
     };
+    const getViewUrl = (id: number) => {
+        return `https://tracker.arkiv-global.net/public/file/${id}/view`;
+    };
 
     const getStatus = () => {
         if (!test) return null;
@@ -226,6 +229,15 @@ const TestPage: React.FC = () => {
             fontSize: 14,
             fontWeight: 500,
         },
+        viewLink: {
+            color: '#667eea',
+            textDecoration: 'none',
+            fontSize: 14,
+            fontWeight: 600,
+            padding: '6px 12px',
+            background: '#eef2ff',
+            borderRadius: 6,
+        },
         downloadLink: {
             color: '#667eea',
             textDecoration: 'none',
@@ -260,6 +272,41 @@ const TestPage: React.FC = () => {
                 </div>
             </div>
         );
+    }
+
+    const renderFile = (file: FileType) => {
+        if (file.originalName.endsWith(".html")
+            || file.originalName.endsWith(".json")
+            || file.originalName.endsWith(".log")
+        ) {
+            return <li key={file.id} style={styles.fileItem}>
+                <a
+                    href={getViewUrl(file.id)}
+                    style={styles.viewLink}
+                    download
+                >
+                    {file.originalName} - View
+                </a>
+                <a
+                    href={getDownloadUrl(file.id)}
+                    style={styles.downloadLink}
+                    download
+                >
+                    ⬇️ Download
+                </a>
+            </li>
+        }
+        return <li key={file.id} style={styles.fileItem}>
+
+            <span style={styles.fileName}>{file.originalName}</span>
+            <a
+                href={getDownloadUrl(file.id)}
+                style={styles.downloadLink}
+                download
+            >
+                ⬇️ Download
+            </a>
+        </li>
     }
 
     const getInnerTestDom = (test: TestType) => {
@@ -311,18 +358,7 @@ const TestPage: React.FC = () => {
                 <div style={styles.filesSection}>
                     <div style={styles.label}>📁 Files ({test.files.length})</div>
                     <ul style={styles.filesList}>
-                        {test.files.map((file) => (
-                            <li key={file.id} style={styles.fileItem}>
-                                <span style={styles.fileName}>{file.originalName}</span>
-                                <a
-                                    href={getDownloadUrl(file.id)}
-                                    style={styles.downloadLink}
-                                    download
-                                >
-                                    ⬇️ Download
-                                </a>
-                            </li>
-                        ))}
+                        {test.files.map((file) => renderFile(file))}
                     </ul>
                 </div>
             )}
