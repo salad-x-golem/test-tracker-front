@@ -26,38 +26,50 @@ const TestPage: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
-        const controller = new AbortController();
+    const fetchTestData = async (controller?: AbortController, isInitialLoad = false) => {
         const url = `https://tracker.arkiv-global.net/public/test/${testName}/info`;
-
-        async function load() {
+        if (isInitialLoad) {
             setLoading(true);
-            setError(null);
-            try {
-                const res = await fetch(url, {signal: controller.signal});
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                const item = await res.json();
-                const parsed: TestType = {
-                    id: Number(item.id),
-                    name: String(item.name ?? ""),
-                    createdAt: item.createdAt,
-                    startedAt: item.startedAt ? new Date(item.startedAt) : null,
-                    finishedAt: item.finishedAt ? new Date(item.finishedAt) : null,
-                    params: String(item.params ?? ""),
-                    files: Array.isArray(item.files) ? item.files : [],
-                };
-                setTest(parsed);
-            } catch (err: unknown) {
-                if (err instanceof Error && err.name !== "AbortError") {
-                    setError(err.message ?? "Failed to load tests");
-                }
-            } finally {
+        }
+        setError(null);
+        try {
+            const res = await fetch(url, {signal: controller?.signal});
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const item = await res.json();
+            const parsed: TestType = {
+                id: Number(item.id),
+                name: String(item.name ?? ""),
+                createdAt: item.createdAt,
+                startedAt: item.startedAt ? new Date(item.startedAt) : null,
+                finishedAt: item.finishedAt ? new Date(item.finishedAt) : null,
+                params: String(item.params ?? ""),
+                files: Array.isArray(item.files) ? item.files : [],
+            };
+            setTest(parsed);
+        } catch (err: unknown) {
+            if (err instanceof Error && err.name !== "AbortError") {
+                setError(err.message ?? "Failed to load tests");
+            }
+        } finally {
+            if (isInitialLoad) {
                 setLoading(false);
             }
         }
+    };
 
-        load();
+    useEffect(() => {
+        const controller = new AbortController();
+        fetchTestData(controller, true);
         return () => controller.abort();
+    }, [testName]);
+
+    // Auto-refresh every 5 seconds
+    useEffect(() => {
+        const intervalId = setInterval(() => {
+            fetchTestData();
+        }, 5000);
+
+        return () => clearInterval(intervalId);
     }, [testName]);
 
 
@@ -72,7 +84,45 @@ const TestPage: React.FC = () => {
         return {label: 'Pending', color: '#6b7280', bg: '#f3f4f6'};
     };
 
+    const getEstimatedTime = () => {
+        if (!test) return null;
+
+        const formatDuration = (seconds: number) => {
+            if (seconds < 60) return `${Math.round(seconds)}s`;
+            if (seconds < 3600) {
+                const mins = Math.floor(seconds / 60);
+                const secs = Math.round(seconds % 60);
+                return `${mins}m ${secs}s`;
+            }
+            const hours = Math.floor(seconds / 3600);
+            const mins = Math.floor((seconds % 3600) / 60);
+            const secs = Math.round(seconds % 60);
+            return `${hours}h ${mins}m ${secs}s`;
+        };
+
+        if (test.finishedAt && test.startedAt) {
+            // Completed: actual time from start to finish
+            const duration = (new Date(test.finishedAt).getTime() - new Date(test.startedAt).getTime()) / 1000;
+            return formatDuration(duration);
+        }
+
+        if (test.startedAt && !test.finishedAt) {
+            // Running: time elapsed since start
+            const elapsed = (Date.now() - new Date(test.startedAt).getTime()) / 1000;
+            return `${formatDuration(elapsed)} (running)`;
+        }
+
+        const elapsedFromCreate = (Date.now() - new Date(test.createdAt).getTime()) / 1000;
+        const elapsedFromCreateEst = 65 - elapsedFromCreate;
+        if (elapsedFromCreateEst >= 0) {
+            return `~${formatDuration(elapsedFromCreateEst)} (estimated start)`;
+        } else {
+            return `Staring due ${-elapsedFromCreateEst}s`;
+        }
+    };
+
     const status = getStatus();
+    const estimatedTime = getEstimatedTime();
     const displayName = testName ? decodeURIComponent(testName) : 'No testName provided';
 
     const styles = {
@@ -248,10 +298,16 @@ const TestPage: React.FC = () => {
                                 {test.startedAt ? new Date(test.startedAt).toLocaleString() : '—'}
                             </span>
                         </div>
-                        <div style={{...styles.row, borderBottom: 'none'}}>
+                        <div style={styles.row}>
                             <span style={styles.label}>✅ Finished</span>
                             <span style={styles.value}>
                                 {test.finishedAt ? new Date(test.finishedAt).toLocaleString() : '—'}
+                            </span>
+                        </div>
+                        <div style={{...styles.row, borderBottom: 'none'}}>
+                            <span style={styles.label}>⏱️ Time</span>
+                            <span style={styles.value}>
+                                {estimatedTime}
                             </span>
                         </div>
 
