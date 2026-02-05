@@ -24,17 +24,17 @@ export function OverviewPage() {
         const res = await fetch(url, {signal: controller.signal});
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        const parsed: TestType[] = (Array.isArray(data) ? data : []).map((item: Record<string, any>) => ({
+        const parsed: TestType[] = (Array.isArray(data) ? data : []).map((item: Record<string, unknown>) => ({
           id: Number(item.id),
           name: String(item.name ?? ""),
-          createdAt: item.createdAt,
-          startedAt: item.startedAt ? new Date(item.startedAt) : null,
-          finishedAt: item.finishedAt ? new Date(item.finishedAt) : null,
+          createdAt: item.createdAt as Date,
+          startedAt: item.startedAt ? new Date(item.startedAt as string | number | Date) : null,
+          finishedAt: item.finishedAt ? new Date(item.finishedAt as string | number | Date) : null,
           params: String(item.params ?? ""),
         }));
         setTests(parsed);
-      } catch (err: any) {
-        if (err.name !== "AbortError") setError(err.message ?? "Failed to load tests");
+      } catch (err: unknown) {
+        if (err instanceof Error && err.name !== "AbortError") setError(err.message ?? "Failed to load tests");
       } finally {
         setLoading(false);
       }
