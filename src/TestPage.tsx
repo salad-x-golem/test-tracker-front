@@ -1,7 +1,6 @@
-import React, {useEffect, useState, useCallback} from 'react';
 import {useParams, useNavigate} from 'react-router-dom';
 import {getGrafanaLink, type TestParams} from "@/data/tests.ts";
-
+import {useCallback, useEffect, useState} from "react";
 
 type FileType = {
     id: number;
@@ -64,15 +63,13 @@ const TestPage: React.FC = () => {
         return () => controller.abort();
     }, [testName, fetchTestData]);
 
-    // Auto-refresh every 5 seconds
     useEffect(() => {
         const intervalId = setInterval(() => {
             fetchTestData();
-        }, 5000);
+        },5000);
 
         return () => clearInterval(intervalId);
     }, [testName, fetchTestData]);
-
 
     const getDownloadUrl = (id: number) => {
         return `https://tracker.arkiv-global.net/public/file/${id}/download`;
@@ -83,40 +80,38 @@ const TestPage: React.FC = () => {
 
     const getStatus = () => {
         if (!test) return null;
-        if (test.finishedAt) return {label: 'Completed', color: '#10b981', bg: '#d1fae5'};
-        if (test.startedAt) return {label: 'Running', color: '#f59e0b', bg: '#fef3c7'};
-        return {label: 'Pending', color: '#6b7280', bg: '#f3f4f6'};
+        if (test.finishedAt) return {label: 'Completed', color: '#065f46', bg: '#ecfdf5', border: '#a7f3d0'};
+        if (test.startedAt) return {label: 'Running', color: '#92400e', bg: '#fffbeb', border: '#fde68a'};
+        return {label: 'Pending', color: '#374151', bg: '#f9fafb', border: '#e5e7eb'};
     };
 
     const getEstimatedTime = (test: TestType, params: TestParams) => {
         const formatDuration = (seconds: number) => {
-            if (seconds < 60) return `${Math.round(seconds)}s`;
-            if (seconds < 3600) {
-                const mins = Math.floor(seconds / 60);
-                const secs = Math.round(seconds % 60);
+            if (seconds <60) return `${Math.round(seconds)}s`;
+            if (seconds <3600) {
+                const mins = Math.floor(seconds /60);
+                const secs = Math.round(seconds %60);
                 return `${mins}m ${secs}s`;
             }
-            const hours = Math.floor(seconds / 3600);
-            const mins = Math.floor((seconds % 3600) / 60);
-            const secs = Math.round(seconds % 60);
+            const hours = Math.floor(seconds /3600);
+            const mins = Math.floor((seconds %3600) /60);
+            const secs = Math.round(seconds %60);
             return `${hours}h ${mins}m ${secs}s`;
         };
 
         if (test.finishedAt && test.startedAt) {
-            // Completed: actual time from start to finish
-            const duration = (new Date(test.finishedAt).getTime() - new Date(test.startedAt).getTime()) / 1000;
+            const duration = (new Date(test.finishedAt).getTime() - new Date(test.startedAt).getTime()) /1000;
             return formatDuration(duration);
         }
 
         if (test.startedAt && !test.finishedAt) {
-            // Running: time elapsed since start
-            const elapsed = (Date.now() - new Date(test.startedAt).getTime()) / 1000;
+            const elapsed = (Date.now() - new Date(test.startedAt).getTime()) /1000;
             return `${formatDuration(elapsed)} (running) / ~${formatDuration(params.testLength)} (planned)`;
         }
 
-        const elapsedFromCreate = (Date.now() - new Date(test.createdAt).getTime()) / 1000;
-        const elapsedFromCreateEst = 65 - elapsedFromCreate;
-        if (elapsedFromCreateEst >= 0) {
+        const elapsedFromCreate = (Date.now() - new Date(test.createdAt).getTime()) /1000;
+        const elapsedFromCreateEst =65 - elapsedFromCreate;
+        if (elapsedFromCreateEst >=0) {
             return `~${formatDuration(elapsedFromCreateEst)} (estimated start)`;
         } else {
             return `Staring due ${-elapsedFromCreateEst}s`;
@@ -129,86 +124,94 @@ const TestPage: React.FC = () => {
     const styles = {
         container: {
             minHeight: '100vh',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            padding: '40px 20px',
-            fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+            background: '#fafafa',
+            padding: '32px 16px',
+            fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+            color: '#1f2937',
         },
         card: {
-            maxWidth: 600,
+            maxWidth: 720,
             margin: '0 auto',
-            background: '#fff',
-            borderRadius: 16,
-            boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+            background: '#ffffff',
+            borderRadius: 8,
+            border: '1px solid #e5e7eb',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
             overflow: 'hidden',
         },
         header: {
-            background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
-            color: '#fff',
-            padding: '30px',
-            textAlign: 'center' as const,
+            background: '#ffffff',
+            borderBottom: '1px solid #e5e7eb',
+            color: '#1f2937',
+            padding: '20px 24px',
+            textAlign: 'left' as const,
         },
-        title: {margin: 0, fontSize: 28, fontWeight: 600},
-        subtitle: {margin: '8px 0 0', opacity: 0.8, fontSize: 14},
-        badge: (bg: string, color: string) => ({
+        title: {margin: 0, fontSize: 18, fontWeight: 600, color: '#111827'},
+        subtitle: {margin: '4px 0 0', color: '#6b7280', fontSize: 13, fontWeight: 400},
+        badge: (bg: string, color: string, border: string) => ({
             display: 'inline-block',
-            padding: '6px 16px',
-            borderRadius: 20,
+            padding: '4px 12px',
+            borderRadius: 4,
             background: bg,
             color: color,
-            fontWeight: 600,
+            fontWeight: 500,
             fontSize: 12,
-            marginTop: 16,
+            marginTop: 12,
+            border: `1px solid ${border}`,
         }),
-        body: {padding: 30},
+        body: {padding: 24},
         row: {
             display: 'flex',
             justifyContent: 'space-between',
-            padding: '16px 0',
-            borderBottom: '1px solid #e5e7eb',
+            alignItems: 'center',
+            gap: 16,
+            padding: '12px 0',
+            borderBottom: '1px solid #f3f4f6',
         },
-        label: {color: '#6b7280', fontSize: 14, fontWeight: 500},
-        value: {color: '#111827', fontSize: 14, fontWeight: 600, textAlign: 'right' as const},
+        label: {color: '#6b7280', fontSize: 13, fontWeight: 500},
+        value: {color: '#1f2937', fontSize: 13, fontWeight: 500, textAlign: 'right' as const},
         paramsBox: {
             background: '#f9fafb',
-            borderRadius: 8,
-            padding: 16,
-            marginTop: 20,
-            fontFamily: 'monospace',
-            fontSize: 13,
+            borderRadius: 4,
+            border: '1px solid #e5e7eb',
+            padding: 12,
+            marginTop: 12,
+            fontFamily: "'SF Mono', Monaco, 'Courier New', monospace",
+            fontSize: 12,
             wordBreak: 'break-all' as const,
+            lineHeight: 1.5,
         },
         button: {
             width: '100%',
-            padding: '14px',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            color: '#fff',
+            padding: '10px 16px',
+            background: '#1f2937',
+            color: '#ffffff',
             border: 'none',
-            borderRadius: 8,
-            fontSize: 16,
-            fontWeight: 600,
+            borderRadius: 6,
+            fontSize: 14,
+            fontWeight: 500,
             cursor: 'pointer',
-            marginTop: 24,
+            marginTop: 16,
         },
         loader: {
             textAlign: 'center' as const,
             padding: 60,
-            color: '#fff',
-            fontSize: 18,
+            color: '#6b7280',
+            fontSize: 14,
         },
         error: {
-            maxWidth: 600,
+            maxWidth: 720,
             margin: '0 auto',
             background: '#fef2f2',
             border: '1px solid #fecaca',
-            borderRadius: 12,
+            borderRadius: 8,
             padding: 24,
             textAlign: 'center' as const,
             color: '#dc2626',
         },
         filesSection: {
-            marginTop: 24,
+            marginTop: 20,
             borderTop: '1px solid #e5e7eb',
-            paddingTop: 20,
+            paddingTop: 16,
         },
         filesList: {
             listStyle: 'none',
@@ -219,33 +222,37 @@ const TestPage: React.FC = () => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '12px 16px',
-            background: '#f9fafb',
-            borderRadius: 8,
+            padding: '10px 12px',
+            background: '#fafafa',
+            borderRadius: 6,
+            border: '1px solid #e5e7eb',
             marginBottom: 8,
         },
         fileName: {
-            color: '#111827',
-            fontSize: 14,
+            color: '#1f2937',
+            fontSize: 13,
             fontWeight: 500,
         },
         viewLink: {
-            color: '#667eea',
+            color: '#2563eb',
             textDecoration: 'none',
-            fontSize: 14,
-            fontWeight: 600,
+            fontSize: 13,
+            fontWeight: 500,
             padding: '6px 12px',
-            background: '#eef2ff',
-            borderRadius: 6,
+            background: '#f3f4f6',
+            borderRadius: 4,
+            border: '1px solid #e5e7eb',
         },
         downloadLink: {
-            color: '#667eea',
+            color: '#2563eb',
             textDecoration: 'none',
-            fontSize: 14,
-            fontWeight: 600,
+            fontSize: 13,
+            fontWeight: 500,
             padding: '6px 12px',
-            background: '#eef2ff',
-            borderRadius: 6,
+            background: '#f3f4f6',
+            borderRadius: 4,
+            border: '1px solid #e5e7eb',
+            marginLeft: 8,
         },
     };
 
@@ -253,7 +260,6 @@ const TestPage: React.FC = () => {
         return (
             <div style={styles.container}>
                 <div style={styles.loader}>
-                    <div style={{fontSize: 40, marginBottom: 16}}>⏳</div>
                     Loading test data...
                 </div>
             </div>
@@ -264,9 +270,8 @@ const TestPage: React.FC = () => {
         return (
             <div style={styles.container}>
                 <div style={styles.error}>
-                    <div style={{fontSize: 40, marginBottom: 16}}>⚠️</div>
                     <strong>Error:</strong> {error}
-                    <button style={{...styles.button, marginTop: 20}} onClick={() => navigate(-1)}>
+                    <button style={{...styles.button, marginTop: 16}} onClick={() => navigate(-1)}>
                         Go Back
                     </button>
                 </div>
@@ -280,31 +285,21 @@ const TestPage: React.FC = () => {
             || file.originalName.endsWith(".log")
         ) {
             return <li key={file.id} style={styles.fileItem}>
-                <a
-                    href={getViewUrl(file.id)}
-                    style={styles.viewLink}
-                    download
-                >
-                    {file.originalName} - View
-                </a>
-                <a
-                    href={getDownloadUrl(file.id)}
-                    style={styles.downloadLink}
-                    download
-                >
-                    ⬇️ Download
-                </a>
+                <span style={styles.fileName}>{file.originalName}</span>
+                <div>
+                    <a href={getViewUrl(file.id)} style={styles.viewLink}>
+                        View
+                    </a>
+                    <a href={getDownloadUrl(file.id)} style={styles.downloadLink} download>
+                        Download
+                    </a>
+                </div>
             </li>
         }
         return <li key={file.id} style={styles.fileItem}>
-
             <span style={styles.fileName}>{file.originalName}</span>
-            <a
-                href={getDownloadUrl(file.id)}
-                style={styles.downloadLink}
-                download
-            >
-                ⬇️ Download
+            <a href={getDownloadUrl(file.id)} style={styles.downloadLink} download>
+                Download
             </a>
         </li>
     }
@@ -313,38 +308,38 @@ const TestPage: React.FC = () => {
         const params: TestParams = test.params ? JSON.parse(test.params) : {};
         const estimatedTime = getEstimatedTime(test, params);
 
-        console.log(test.createdAt)
         return <div style={styles.body}>
             <div style={styles.row}>
-                <span style={styles.label}>📋 Name</span>
-                <span>                          <a className="px-2 text-blue-600 hover:underline" href={getGrafanaLink(test)}>🔗 Grafana</a>
+                <span style={styles.label}>Name</span>
+                <span>
+                    <a className="px-2 text-blue-600 hover:underline" href={getGrafanaLink(test)}>Grafana</a>
                 </span>
                 <span style={styles.value}>{test.name}</span>
             </div>
             <div style={styles.row}>
-                <span style={styles.label}>🆔 ID</span>
+                <span style={styles.label}>ID</span>
                 <span style={styles.value}>{test.id}</span>
             </div>
             <div style={styles.row}>
-                <span style={styles.label}>📅 Created</span>
+                <span style={styles.label}>Created</span>
                 <span style={styles.value}>
                     {new Date(test.createdAt).toLocaleString()}
                 </span>
             </div>
             <div style={styles.row}>
-                <span style={styles.label}>▶️ Started</span>
+                <span style={styles.label}>Started</span>
                 <span style={styles.value}>
                     {test.startedAt ? new Date(test.startedAt).toLocaleString() : '—'}
                 </span>
             </div>
             <div style={styles.row}>
-                <span style={styles.label}>✅ Finished</span>
+                <span style={styles.label}>Finished</span>
                 <span style={styles.value}>
                     {test.finishedAt ? new Date(test.finishedAt).toLocaleString() : '—'}
                 </span>
             </div>
             <div style={{...styles.row, borderBottom: 'none'}}>
-                <span style={styles.label}>⏱️ Time</span>
+                <span style={styles.label}>Duration</span>
                 <span style={styles.value}>
                     {estimatedTime}
                 </span>
@@ -352,14 +347,14 @@ const TestPage: React.FC = () => {
 
             {test.params && (
                 <>
-                    <div style={{...styles.label, marginTop: 20}}>⚙️ Parameters</div>
+                    <div style={{...styles.label, marginTop: 16}}>Parameters</div>
                     <div style={styles.paramsBox}>{test.params}</div>
                 </>
             )}
 
             {test.files && test.files.length > 0 && (
                 <div style={styles.filesSection}>
-                    <div style={styles.label}>📁 Files ({test.files.length})</div>
+                    <div style={styles.label}>Files ({test.files.length})</div>
                     <ul style={styles.filesList}>
                         {test.files.map((file) => renderFile(file))}
                     </ul>
@@ -375,7 +370,7 @@ const TestPage: React.FC = () => {
                     <h1 style={styles.title}>{displayName}</h1>
                     <p style={styles.subtitle}>Test #{test?.id}</p>
                     {status && (
-                        <span style={styles.badge(status.bg, status.color)}>
+                        <span style={styles.badge(status.bg, status.color, status.border)}>
                             {status.label}
                         </span>
                     )}
