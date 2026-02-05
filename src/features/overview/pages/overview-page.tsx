@@ -1,13 +1,6 @@
 import {useEffect, useState} from "react";
+import type {TestType} from "@/data/tests.ts";
 
-type TestType = {
-  id: number;
-  name: string;
-  createdAt: Date;
-  startedAt: Date | null;
-  finishedAt: Date | null;
-  params: string;
-};
 
 export function OverviewPage() {
   const [tests, setTests] = useState<TestType[]>([]);

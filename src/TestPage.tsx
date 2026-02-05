@@ -1,5 +1,6 @@
 import React, {useEffect, useState, useCallback} from 'react';
 import {useParams, useNavigate} from 'react-router-dom';
+import type {TestParams} from "@/data/tests.ts";
 
 
 type FileType = {
@@ -84,9 +85,7 @@ const TestPage: React.FC = () => {
         return {label: 'Pending', color: '#6b7280', bg: '#f3f4f6'};
     };
 
-    const getEstimatedTime = () => {
-        if (!test) return null;
-
+    const getEstimatedTime = (test: TestType, params: TestParams) => {
         const formatDuration = (seconds: number) => {
             if (seconds < 60) return `${Math.round(seconds)}s`;
             if (seconds < 3600) {
@@ -109,7 +108,7 @@ const TestPage: React.FC = () => {
         if (test.startedAt && !test.finishedAt) {
             // Running: time elapsed since start
             const elapsed = (Date.now() - new Date(test.startedAt).getTime()) / 1000;
-            return `${formatDuration(elapsed)} (running)`;
+            return `${formatDuration(elapsed)} (running) / ~${formatDuration(params["test-length"])} (planned)`;
         }
 
         const elapsedFromCreate = (Date.now() - new Date(test.createdAt).getTime()) / 1000;
@@ -122,7 +121,6 @@ const TestPage: React.FC = () => {
     };
 
     const status = getStatus();
-    const estimatedTime = getEstimatedTime();
     const displayName = testName ? decodeURIComponent(testName) : 'No testName provided';
 
     const styles = {
@@ -221,7 +219,8 @@ const TestPage: React.FC = () => {
             padding: '12px 16px',
             background: '#f9fafb',
             borderRadius: 8,
-            marginBottom: 8,},
+            marginBottom: 8,
+        },
         fileName: {
             color: '#111827',
             fontSize: 14,
@@ -263,6 +262,73 @@ const TestPage: React.FC = () => {
         );
     }
 
+    const getInnerTestDom = (test: TestType) => {
+        const params: TestParams = test.params ? JSON.parse(test.params) : {};
+        const estimatedTime = getEstimatedTime(test, params);
+
+        return <div style={styles.body}>
+            <div style={styles.row}>
+                <span style={styles.label}>📋 Name</span>
+                <span style={styles.value}>{test.name}</span>
+            </div>
+            <div style={styles.row}>
+                <span style={styles.label}>🆔 ID</span>
+                <span style={styles.value}>{test.id}</span>
+            </div>
+            <div style={styles.row}>
+                <span style={styles.label}>📅 Created</span>
+                <span style={styles.value}>
+                    {new Date(test.createdAt).toLocaleString()}
+                </span>
+            </div>
+            <div style={styles.row}>
+                <span style={styles.label}>▶️ Started</span>
+                <span style={styles.value}>
+                    {test.startedAt ? new Date(test.startedAt).toLocaleString() : '—'}
+                </span>
+            </div>
+            <div style={styles.row}>
+                <span style={styles.label}>✅ Finished</span>
+                <span style={styles.value}>
+                    {test.finishedAt ? new Date(test.finishedAt).toLocaleString() : '—'}
+                </span>
+            </div>
+            <div style={{...styles.row, borderBottom: 'none'}}>
+                <span style={styles.label}>⏱️ Time</span>
+                <span style={styles.value}>
+                    {estimatedTime}
+                </span>
+            </div>
+
+            {test.params && (
+                <>
+                    <div style={{...styles.label, marginTop: 20}}>⚙️ Parameters</div>
+                    <div style={styles.paramsBox}>{test.params}</div>
+                </>
+            )}
+
+            {test.files && test.files.length > 0 && (
+                <div style={styles.filesSection}>
+                    <div style={styles.label}>📁 Files ({test.files.length})</div>
+                    <ul style={styles.filesList}>
+                        {test.files.map((file) => (
+                            <li key={file.id} style={styles.fileItem}>
+                                <span style={styles.fileName}>{file.originalName}</span>
+                                <a
+                                    href={getDownloadUrl(file.id)}
+                                    style={styles.downloadLink}
+                                    download
+                                >
+                                    ⬇️ Download
+                                </a>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
+        </div>
+    }
+
     return (
         <div style={styles.container}>
             <div style={styles.card}>
@@ -276,73 +342,7 @@ const TestPage: React.FC = () => {
                     )}
                 </div>
 
-                {test && (
-                    <div style={styles.body}>
-                        <div style={styles.row}>
-                            <span style={styles.label}>📋 Name</span>
-                            <span style={styles.value}>{test.name}</span>
-                        </div>
-                        <div style={styles.row}>
-                            <span style={styles.label}>🆔 ID</span>
-                            <span style={styles.value}>{test.id}</span>
-                        </div>
-                        <div style={styles.row}>
-                            <span style={styles.label}>📅 Created</span>
-                            <span style={styles.value}>
-                                {new Date(test.createdAt).toLocaleString()}
-                            </span>
-                        </div>
-                        <div style={styles.row}>
-                            <span style={styles.label}>▶️ Started</span>
-                            <span style={styles.value}>
-                                {test.startedAt ? new Date(test.startedAt).toLocaleString() : '—'}
-                            </span>
-                        </div>
-                        <div style={styles.row}>
-                            <span style={styles.label}>✅ Finished</span>
-                            <span style={styles.value}>
-                                {test.finishedAt ? new Date(test.finishedAt).toLocaleString() : '—'}
-                            </span>
-                        </div>
-                        <div style={{...styles.row, borderBottom: 'none'}}>
-                            <span style={styles.label}>⏱️ Time</span>
-                            <span style={styles.value}>
-                                {estimatedTime}
-                            </span>
-                        </div>
-
-                        {test.params && (
-                            <>
-                                <div style={{...styles.label, marginTop: 20}}>⚙️ Parameters</div>
-                                <div style={styles.paramsBox}>{test.params}</div>
-                            </>
-                        )}
-
-                        {test.files && test.files.length > 0 && (
-                            <div style={styles.filesSection}>
-                                <div style={styles.label}>📁 Files ({test.files.length})</div>
-                                <ul style={styles.filesList}>
-                                    {test.files.map((file) => (
-                                        <li key={file.id} style={styles.fileItem}>
-                                            <span style={styles.fileName}>{file.originalName}</span>
-                                            <a
-                                                href={getDownloadUrl(file.id)}
-                                                style={styles.downloadLink}
-                                                download
-                                            >
-                                                ⬇️ Download
-                                            </a>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        )}
-
-                        <button style={styles.button} onClick={() => navigate(-1)}>
-                            ← Go Back
-                        </button>
-                    </div>
-                )}
+                {test && getInnerTestDom(test)}
             </div>
         </div>
     );
