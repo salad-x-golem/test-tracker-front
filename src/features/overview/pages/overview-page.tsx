@@ -27,7 +27,7 @@ export function OverviewPage() {
         const parsed: TestType[] = (Array.isArray(data) ? data : []).map((item: Record<string, unknown>) => ({
           id: Number(item.id),
           name: String(item.name ?? ""),
-          createdAt: item.createdAt as Date,
+          createdAt: new Date(item.createdAt as string | number | Date),
           startedAt: item.startedAt ? new Date(item.startedAt as string | number | Date) : null,
           finishedAt: item.finishedAt ? new Date(item.finishedAt as string | number | Date) : null,
           params: String(item.params ?? ""),
