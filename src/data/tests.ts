@@ -1,10 +1,10 @@
 export type TestParams = {
-    "runs-on": string;
-    "test-length": number;
-    "block-every": number;
-    "arkiv-op-geth": string;
-    "block-limit": number;
-    "test-scenario": string;
+    runsOn: string;
+    testLength: number;
+    blockEvery: number;
+    arkivOpGeth: string;
+    blockLimit: number;
+    testScenario: string;
 }
 
 export type TestType = {
@@ -15,3 +15,7 @@ export type TestType = {
     finishedAt: Date | null;
     params: string;
 };
+
+export function getGrafanaLink(t: TestType): string {
+    return "https://l2.arkiv-global.net/d/advfmrd/l2-tests?var-jobname=" + t.name + "&from=" + t.createdAt.toISOString();
+}

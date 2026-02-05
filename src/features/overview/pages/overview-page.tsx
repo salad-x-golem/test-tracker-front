@@ -1,5 +1,5 @@
 import {useEffect, useState} from "react";
-import type {TestType} from "@/data/tests.ts";
+import {getGrafanaLink, type TestParams, type TestType} from "@/data/tests.ts";
 
 
 export function OverviewPage() {
@@ -66,7 +66,7 @@ export function OverviewPage() {
               <tbody className="bg-white divide-y divide-gray-200">
               {tests.map((t) => {
                   try {
-                    const parameters = JSON.parse(t.params);
+                    const parameters: TestParams = JSON.parse(t.params);
                     let realTime = 0;
                     if (t.startedAt && t.finishedAt) {
                       realTime = Math.max(0, Math.round((t.finishedAt.getTime() - t.startedAt.getTime()) / 1000))
@@ -78,12 +78,12 @@ export function OverviewPage() {
                       <tr key={t.id}>
                         <td className="px-4 py-2 text-sm text-gray-800">
                           <a href={"/test/" + encodeURIComponent(t.name)} className="text-blue-600 hover:underline">
-                          {t.name} ({parameters["runs-on"]})</a>
-                          <a className="px-2 text-blue-600 hover:underline" href={"https://l2.arkiv-global.net/d/advfmrd/l2-tests?var-jobname=" + t.name + "&from=" + t.createdAt.toISOString()}>🔗 Grafana</a>
+                          {t.name} ({parameters.runsOn})</a>
+                          <a className="px-2 text-blue-600 hover:underline" href={getGrafanaLink(t)}>🔗 Grafana</a>
                         </td>
                         <td className="px-4 py-2 text-sm text-gray-700">{formatDate(t.startedAt)}</td>
                         <td className="px-4 py-2 text-sm text-gray-700">{formatDate(t.finishedAt)}</td>
-                        <td className="px-4 py-2 text-sm text-gray-800">{parameters["test-length"]}s ({realTime}s)</td>
+                        <td className="px-4 py-2 text-sm text-gray-800">{parameters.testLength}s ({realTime}s)</td>
                       </tr>
                     )
                   } catch (e) {

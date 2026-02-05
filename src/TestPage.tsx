@@ -1,6 +1,6 @@
 import React, {useEffect, useState, useCallback} from 'react';
 import {useParams, useNavigate} from 'react-router-dom';
-import type {TestParams} from "@/data/tests.ts";
+import {getGrafanaLink, type TestParams} from "@/data/tests.ts";
 
 
 type FileType = {
@@ -40,10 +40,10 @@ const TestPage: React.FC = () => {
             const parsed: TestType = {
                 id: Number(item.id),
                 name: String(item.name ?? ""),
-                createdAt: item.createdAt,
+                createdAt: new Date(item.createdAt),
                 startedAt: item.startedAt ? new Date(item.startedAt) : null,
                 finishedAt: item.finishedAt ? new Date(item.finishedAt) : null,
-                params: String(item.params ?? ""),
+                params: String(item.parameters ?? ""),
                 files: Array.isArray(item.files) ? item.files : [],
             };
             setTest(parsed);
@@ -111,7 +111,7 @@ const TestPage: React.FC = () => {
         if (test.startedAt && !test.finishedAt) {
             // Running: time elapsed since start
             const elapsed = (Date.now() - new Date(test.startedAt).getTime()) / 1000;
-            return `${formatDuration(elapsed)} (running) / ~${formatDuration(params["test-length"])} (planned)`;
+            return `${formatDuration(elapsed)} (running) / ~${formatDuration(params.testLength)} (planned)`;
         }
 
         const elapsedFromCreate = (Date.now() - new Date(test.createdAt).getTime()) / 1000;
@@ -313,9 +313,12 @@ const TestPage: React.FC = () => {
         const params: TestParams = test.params ? JSON.parse(test.params) : {};
         const estimatedTime = getEstimatedTime(test, params);
 
+        console.log(test.createdAt)
         return <div style={styles.body}>
             <div style={styles.row}>
                 <span style={styles.label}>📋 Name</span>
+                <span>                          <a className="px-2 text-blue-600 hover:underline" href={getGrafanaLink(test)}>🔗 Grafana</a>
+                </span>
                 <span style={styles.value}>{test.name}</span>
             </div>
             <div style={styles.row}>
