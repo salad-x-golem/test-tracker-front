@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useCallback} from 'react';
 import {useParams, useNavigate} from 'react-router-dom';
 
 
@@ -26,7 +26,7 @@ const TestPage: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const fetchTestData = async (controller?: AbortController, isInitialLoad = false) => {
+    const fetchTestData = useCallback(async (controller?: AbortController, isInitialLoad = false) => {
         const url = `https://tracker.arkiv-global.net/public/test/${testName}/info`;
         if (isInitialLoad) {
             setLoading(true);
@@ -55,13 +55,13 @@ const TestPage: React.FC = () => {
                 setLoading(false);
             }
         }
-    };
+    }, [testName]);
 
     useEffect(() => {
         const controller = new AbortController();
         fetchTestData(controller, true);
         return () => controller.abort();
-    }, [testName]);
+    }, [testName, fetchTestData]);
 
     // Auto-refresh every 5 seconds
     useEffect(() => {
@@ -70,7 +70,7 @@ const TestPage: React.FC = () => {
         }, 5000);
 
         return () => clearInterval(intervalId);
-    }, [testName]);
+    }, [testName, fetchTestData]);
 
 
     const getDownloadUrl = (id: number) => {

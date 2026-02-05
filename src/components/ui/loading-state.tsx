@@ -11,7 +11,6 @@ export function LoadingState({ rows = 5, className }: LoadingStateProps) {
   return (
     <div className={`space-y-3 ${className}`}>
       {Array.from({ length: rows }).map((_, i) => (
-        // eslint-disable-next-line react/no-array-index-key
         <Skeleton key={`${id}-${i}`} className="h-12 w-full" />
       ))}
     </div>
