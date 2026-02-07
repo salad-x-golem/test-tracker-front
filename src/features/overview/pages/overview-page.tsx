@@ -104,7 +104,7 @@ export function OverviewPage() {
           <h1 className="text-3xl font-bold tracking-tight">Testing</h1>
           <p className="text-muted-foreground">List of last tests</p>
         </div>
-        <NewTestDialog onTestCreated={handleTestCreated} />
+        <NewTestDialog onTestCreated={handleTestCreated}/>
       </div>
 
       <div className="flex items-center gap-4">
@@ -147,11 +147,15 @@ export function OverviewPage() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
               <tr>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Test Name (machine)</th>
+                <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Test Name
+                  (machine)
+                </th>
                 <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Type</th>
                 <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Started</th>
                 <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Finished</th>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Planned test time (real)</th>
+                <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Planned test time
+                  (real)
+                </th>
               </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -169,10 +173,12 @@ export function OverviewPage() {
                     return (
                       <tr key={t.id}>
                         <td className="px-4 py-2 text-sm text-gray-800">
-                          <a href={"/test/" + encodeURIComponent(t.name)} className="text-blue-600 hover:underline">
-                          {t.name}</a>
+                          <a href={"/test/" + encodeURIComponent(t.name)}
+                             className="text-blue-600 hover:underline">
+                            {t.name}</a>
                           {parameters.isExternal ||
-                           <a className="px-2 text-blue-600 hover:underline" href={getGrafanaLink(t)}>🔗 Grafana</a>}
+                              <a className="px-2 text-blue-600 hover:underline"
+                                 href={getGrafanaLink(t)}>🔗 Grafana</a>}
                         </td>
                         <td className="px-4 py-2 text-sm">
                           <Badge variant={external ? "default" : "secondary"}>
@@ -181,14 +187,20 @@ export function OverviewPage() {
                         </td>
                         <td className="px-4 py-2 text-sm text-gray-700">{formatDate(t.startedAt)}</td>
                         <td className="px-4 py-2 text-sm text-gray-700">{formatDate(t.finishedAt)}</td>
-                        <td className="px-4 py-2 text-sm text-gray-800">{parameters.testLength}s ({realTime}s)</td>
+                        <td className="px-4 py-2 text-sm text-gray-800">{parameters.testLength}s
+                          ({realTime}s)
+                        </td>
                       </tr>
                     )
                   } catch (e) {
                     if (e instanceof Error) {
-                      return <tr><td>Error {e.message}</td></tr>;
+                      return <tr>
+                        <td>Error {e.message}</td>
+                      </tr>;
                     }
-                    return <tr><td>Unknown error</td></tr>;
+                    return <tr>
+                      <td>Unknown error</td>
+                    </tr>;
                   }
                 }
               )}
