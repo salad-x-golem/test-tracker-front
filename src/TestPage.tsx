@@ -6,6 +6,7 @@ import {fetchWithAuth} from "@/lib/fetch-with-auth.ts";
 
 type FileType = {
     id: number;
+    uid: number;
     originalName: string;
     path: string;
     testId: number;
@@ -73,11 +74,11 @@ const TestPage: React.FC = () => {
         return () => clearInterval(intervalId);
     }, [testName, fetchTestData]);
 
-    const getDownloadUrl = (id: number) => {
-        return `https://tracker.arkiv-global.net/public/file/${id}/download`;
+    const getDownloadUrl = (uid: number) => {
+        return `https://tracker.arkiv-global.net/public/file/${uid}/download`;
     };
-    const getViewUrl = (id: number) => {
-        return `https://tracker.arkiv-global.net/public/file/${id}/view`;
+    const getViewUrl = (uid: number) => {
+        return `https://tracker.arkiv-global.net/public/file/${uid}/view`;
     };
 
     const getStatus = () => {
@@ -289,10 +290,10 @@ const TestPage: React.FC = () => {
             return <li key={file.id} style={styles.fileItem}>
                 <span style={styles.fileName}>{file.originalName}</span>
                 <div>
-                    <a href={getViewUrl(file.id)} style={styles.viewLink}>
+                    <a href={getViewUrl(file.uid)} style={styles.viewLink}>
                         View
                     </a>
-                    <a href={getDownloadUrl(file.id)} style={styles.downloadLink} download>
+                    <a href={getDownloadUrl(file.uid)} style={styles.downloadLink} download>
                         Download
                     </a>
                 </div>
