@@ -1,6 +1,7 @@
 import {useParams, useNavigate} from 'react-router-dom';
 import {getGrafanaLink, type TestParams} from "@/data/tests.ts";
 import {useCallback, useEffect, useState} from "react";
+import {JsonViewer} from "@/components/ui/json-viewer.tsx";
 
 type FileType = {
     id: number;
@@ -345,7 +346,7 @@ const TestPage: React.FC = () => {
             {test.params && (
                 <>
                     <div style={{...styles.label, marginTop: 16}}>Parameters</div>
-                    <div style={styles.paramsBox}>{test.params}</div>
+                    <JsonViewer data={params}/>
                 </>
             )}
 
