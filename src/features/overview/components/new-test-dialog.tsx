@@ -3,6 +3,13 @@ import {Plus} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
 import {Label} from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {fetchWithAuth} from "@/lib/fetch-with-auth.ts";
 import {
   Dialog,
@@ -14,36 +21,57 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
-const INTERNAL_DEFAULTS = {
-  timeoutMinutes: "5",
-  workers: '["zeus"]',
-  arkivOpGeth: "v1.101605.0-1.2",
-  testLength: 60,
-  blockEvery: 1,
-  blockLimit: 60000000,
-  testScenario: "dc_write_only",
-  testUsers: 20,
-  isExternal: false as const,
-};
+const WORKER_OPTIONS = ["luna", "flux", "pulse", "apex", "zeus"] as const;
 
-const EXTERNAL_DEFAULTS = {
-  timeoutMinutes: "5",
-  workers: '["zeus"]',
-  testLength: 60,
-  testScenario: "dc_write_only",
-  testUsers: 20,
-  isExternal: true as const,
-  externalRpcUrl: "https://kaolin.hoodi.arkiv.network/rpc",
-};
+const LS_KEY = "new_test_selected_worker";
 
-type InternalFormData = typeof INTERNAL_DEFAULTS;
-type ExternalFormData = typeof EXTERNAL_DEFAULTS;
+function getSavedWorker(): string {
+  try {
+    const saved = localStorage.getItem(LS_KEY);
+    if (saved && WORKER_OPTIONS.includes(saved as typeof WORKER_OPTIONS[number])) {
+      return saved;
+    }
+  } catch { /* ignore */ }
+  return "zeus";
+}
+
+function workerToFormValue(worker: string): string {
+  return `["${worker}"]`;
+}
+
+function getDefaults(external: boolean, worker: string) {
+  const base = {
+    timeoutMinutes: "5",
+    workers: workerToFormValue(worker),
+    testLength: 60,
+    testScenario: "dc_write_only",
+    testUsers: 20,
+  };
+  if (external) {
+    return {
+      ...base,
+      isExternal: true as const,
+      externalRpcUrl: "https://kaolin.hoodi.arkiv.network/rpc",
+    };
+  }
+  return {
+    ...base,
+    arkivOpGeth: "v1.101605.0-1.2",
+    blockEvery: 1,
+    blockLimit: 60000000,
+    isExternal: false as const,
+  };
+}
+
+type InternalFormData = ReturnType<typeof getDefaults> & { isExternal: false; arkivOpGeth: string; blockEvery: number; blockLimit: number };
+type ExternalFormData = ReturnType<typeof getDefaults> & { isExternal: true; externalRpcUrl: string };
 type FormData = InternalFormData | ExternalFormData;
 
 export function NewTestDialog({onTestCreated}: { onTestCreated?: () => void }) {
   const [open, setOpen] = useState(false);
   const [isExternal, setIsExternal] = useState(false);
-  const [formData, setFormData] = useState<FormData>(INTERNAL_DEFAULTS);
+  const [selectedWorker, setSelectedWorker] = useState(getSavedWorker);
+  const [formData, setFormData] = useState<FormData>(() => getDefaults(false, getSavedWorker()) as FormData);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,9 +79,15 @@ export function NewTestDialog({onTestCreated}: { onTestCreated?: () => void }) {
     setFormData((prev) => ({...prev, [field]: value}));
   };
 
+  const handleWorkerChange = (worker: string) => {
+    setSelectedWorker(worker);
+    try { localStorage.setItem(LS_KEY, worker); } catch { /* ignore */ }
+    handleChange("workers", workerToFormValue(worker));
+  };
+
   const handleTestTypeChange = (external: boolean) => {
     setIsExternal(external);
-    setFormData(external ? {...EXTERNAL_DEFAULTS} : {...INTERNAL_DEFAULTS});
+    setFormData(getDefaults(external, selectedWorker) as FormData);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -71,7 +105,7 @@ export function NewTestDialog({onTestCreated}: { onTestCreated?: () => void }) {
         const text = await res.text();
         throw new Error(text || `HTTP ${res.status}`);
       }
-      setFormData(isExternal ? {...EXTERNAL_DEFAULTS} : {...INTERNAL_DEFAULTS});
+      setFormData(getDefaults(isExternal, selectedWorker) as FormData);
       setOpen(false);
       onTestCreated?.();
     } catch (err: unknown) {
@@ -127,13 +161,16 @@ export function NewTestDialog({onTestCreated}: { onTestCreated?: () => void }) {
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="workers" className="text-right">Workers</Label>
-            <Input
-              id="workers"
-              value={formData.workers}
-              onChange={(e) => handleChange("workers", e.target.value)}
-              className="col-span-3"
-              required
-            />
+            <Select value={selectedWorker} onValueChange={handleWorkerChange}>
+              <SelectTrigger id="workers" className="col-span-3">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {WORKER_OPTIONS.map((w) => (
+                  <SelectItem key={w} value={w}>{w}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           {!isExternal && (
             <div className="grid grid-cols-4 items-center gap-4">
