@@ -2,6 +2,7 @@ import {useCallback, useEffect, useState} from "react";
 import {getGrafanaLink, type TestParams, type TestType} from "@/data/tests.ts";
 import {NewTestDialog} from "@/features/overview/components/new-test-dialog.tsx";
 import {fetchWithAuth} from "@/lib/fetch-with-auth.ts";
+import {AdminKeyDialog} from "@/components/admin-key-dialog.tsx";
 
 
 export function OverviewPage() {
@@ -9,6 +10,7 @@ export function OverviewPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
 
   const handleTestCreated = useCallback(() => {
     setRefreshKey((k) => k + 1);
@@ -23,6 +25,11 @@ export function OverviewPage() {
       setError(null);
       try {
         const res = await fetchWithAuth(url, {signal: controller.signal});
+        if (res.status === 401) {
+          setShowAuthDialog(true);
+          setLoading(false);
+          return;
+        }
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         const parsed: TestType[] = (Array.isArray(data) ? data : []).map((item: Record<string, unknown>) => ({
@@ -47,9 +54,20 @@ export function OverviewPage() {
 
   const formatDate = (d: Date | null) => (d ? d.toLocaleString() : "-");
 
+  const handleAuthKeySaved = useCallback(() => {
+    setShowAuthDialog(false);
+    setRefreshKey((k) => k + 1);
+  }, []);
 
   return (
     <div className="space-y-6">
+      <AdminKeyDialog
+        open={showAuthDialog}
+        onOpenChange={setShowAuthDialog}
+        onKeySaved={handleAuthKeySaved}
+        description="Authentication required. Please enter your admin/bearer key to access the test list."
+        showTrigger={false}
+      />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Testing</h1>

@@ -3,6 +3,7 @@ import {getGrafanaLink, type TestParams} from "@/data/tests.ts";
 import {useCallback, useEffect, useState} from "react";
 import {JsonViewer} from "@/components/ui/json-viewer.tsx";
 import {fetchWithAuth} from "@/lib/fetch-with-auth.ts";
+import {AdminKeyDialog} from "@/components/admin-key-dialog.tsx";
 
 type FileType = {
     id: number;
@@ -28,6 +29,8 @@ const TestPage: React.FC = () => {
     const [test, setTest] = useState<TestType | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [showAuthDialog, setShowAuthDialog] = useState(false);
+    const [refreshKey, setRefreshKey] = useState(0);
 
     const fetchTestData = useCallback(async (controller?: AbortController, isInitialLoad = false) => {
         const url = `https://tracker.arkiv-global.net/public/test/${testName}/info`;
@@ -37,6 +40,11 @@ const TestPage: React.FC = () => {
         setError(null);
         try {
             const res = await fetchWithAuth(url, {signal: controller?.signal});
+            if (res.status === 401) {
+                setShowAuthDialog(true);
+                if (isInitialLoad) setLoading(false);
+                return;
+            }
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const item = await res.json();
             const parsed: TestType = {
@@ -64,7 +72,7 @@ const TestPage: React.FC = () => {
         const controller = new AbortController();
         fetchTestData(controller, true);
         return () => controller.abort();
-    }, [testName, fetchTestData]);
+    }, [testName, fetchTestData, refreshKey]);
 
     useEffect(() => {
         const intervalId = setInterval(() => {
@@ -73,6 +81,11 @@ const TestPage: React.FC = () => {
 
         return () => clearInterval(intervalId);
     }, [testName, fetchTestData]);
+
+    const handleAuthKeySaved = useCallback(() => {
+        setShowAuthDialog(false);
+        setRefreshKey((k) => k + 1);
+    }, []);
 
     const getDownloadUrl = (uid: number) => {
         return `https://tracker.arkiv-global.net/public/file/${uid}/download`;
@@ -259,9 +272,20 @@ const TestPage: React.FC = () => {
         },
     };
 
+    const authDialog = (
+        <AdminKeyDialog
+            open={showAuthDialog}
+            onOpenChange={setShowAuthDialog}
+            onKeySaved={handleAuthKeySaved}
+            description="Authentication required. Please enter your admin/bearer key to access the test details."
+            showTrigger={false}
+        />
+    );
+
     if (loading) {
         return (
             <div style={styles.container}>
+                {authDialog}
                 <div style={styles.loader}>
                     Loading test data...
                 </div>
@@ -272,6 +296,7 @@ const TestPage: React.FC = () => {
     if (error) {
         return (
             <div style={styles.container}>
+                {authDialog}
                 <div style={styles.error}>
                     <strong>Error:</strong> {error}
                     <button style={{...styles.button, marginTop: 16}} onClick={() => navigate(-1)}>
@@ -365,6 +390,7 @@ const TestPage: React.FC = () => {
 
     return (
         <div style={styles.container}>
+            {authDialog}
             <div style={styles.card}>
                 <div style={styles.header}>
                     <h1 style={styles.title}>{displayName}</h1>

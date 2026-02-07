@@ -14,39 +14,67 @@ import {
 } from "@/components/ui/dialog";
 import { getAdminKey, setAdminKey } from "@/lib/admin-key";
 
-export function AdminKeyDialog() {
-  const [open, setOpen] = useState(false);
+interface AdminKeyDialogProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  onKeySaved?: () => void;
+  description?: string;
+  showTrigger?: boolean;
+}
+
+export function AdminKeyDialog({
+  open: controlledOpen,
+  onOpenChange,
+  onKeySaved,
+  description,
+  showTrigger = true,
+}: AdminKeyDialogProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
   const [key, setKey] = useState("");
 
-  const handleOpen = (isOpen: boolean) => {
-    if (isOpen) {
+  const isControlled = controlledOpen !== undefined;
+  const isOpen = controlledOpen ?? internalOpen;
+
+  const handleOpen = (nextOpen: boolean) => {
+    if (nextOpen) {
       setKey(getAdminKey());
     }
-    setOpen(isOpen);
+    if (isControlled) {
+      onOpenChange?.(nextOpen);
+    } else {
+      setInternalOpen(nextOpen);
+    }
   };
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     setAdminKey(key);
-    setOpen(false);
+    if (isControlled) {
+      onOpenChange?.(false);
+    } else {
+      setInternalOpen(false);
+    }
+    onKeySaved?.();
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleOpen}>
-      <DialogTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          title="Set Admin Key"
-        >
-          <KeyRound className="h-5 w-5" />
-        </Button>
-      </DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={handleOpen}>
+      {showTrigger && (
+        <DialogTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            title="Set Admin Key"
+          >
+            <KeyRound className="h-5 w-5" />
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Admin Key</DialogTitle>
           <DialogDescription>
-            Set the secret token used to authenticate backend requests.
+            {description ?? "Set the secret token used to authenticate backend requests."}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSave} className="grid gap-4 py-4">
