@@ -1,11 +1,18 @@
-import {useEffect, useState} from "react";
+import {useCallback, useEffect, useState} from "react";
 import {getGrafanaLink, type TestParams, type TestType} from "@/data/tests.ts";
+import {NewTestDialog} from "@/features/overview/components/new-test-dialog.tsx";
 
 
 export function OverviewPage() {
   const [tests, setTests] = useState<TestType[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const handleTestCreated = useCallback(() => {
+    setRefreshKey((k) => k + 1);
+  }, []);
+
   useEffect(() => {
     const controller = new AbortController();
     const url = "https://tracker.arkiv-global.net/public/test/list";
@@ -35,7 +42,7 @@ export function OverviewPage() {
 
     load();
     return () => controller.abort();
-  }, []);
+  }, [refreshKey]);
 
   const formatDate = (d: Date | null) => (d ? d.toLocaleString() : "-");
 
@@ -47,6 +54,7 @@ export function OverviewPage() {
           <h1 className="text-3xl font-bold tracking-tight">Testing</h1>
           <p className="text-muted-foreground">List of last tests</p>
         </div>
+        <NewTestDialog onTestCreated={handleTestCreated} />
       </div>
 
       <div>
