@@ -170,7 +170,7 @@ export function OverviewPage() {
                       <tr key={t.id}>
                         <td className="px-4 py-2 text-sm text-gray-800">
                           <a href={"/test/" + encodeURIComponent(t.name)} className="text-blue-600 hover:underline">
-                          {t.name} ({parameters.runsOn})</a>
+                          {t.name}</a>
                           {parameters.isExternal ||
                            <a className="px-2 text-blue-600 hover:underline" href={getGrafanaLink(t)}>🔗 Grafana</a>}
                         </td>
