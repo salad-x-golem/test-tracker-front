@@ -1,8 +1,13 @@
-import {useCallback, useEffect, useState} from "react";
-import {getGrafanaLink, type TestParams, type TestType} from "@/data/tests.ts";
+import {useCallback, useEffect, useMemo, useState} from "react";
+import {getGrafanaLink, isTestExternal, type TestParams, type TestType} from "@/data/tests.ts";
 import {NewTestDialog} from "@/features/overview/components/new-test-dialog.tsx";
 import {fetchWithAuth} from "@/lib/fetch-with-auth.ts";
 import {AdminKeyDialog} from "@/components/admin-key-dialog.tsx";
+import {Badge} from "@/components/ui/badge.tsx";
+import {SearchInput} from "@/components/ui/search-input.tsx";
+import {Button} from "@/components/ui/button.tsx";
+
+type ExternalFilter = "all" | "internal" | "external";
 
 
 export function OverviewPage() {
@@ -11,6 +16,8 @@ export function OverviewPage() {
   const [error, setError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const [search, setSearch] = useState("");
+  const [externalFilter, setExternalFilter] = useState<ExternalFilter>("all");
 
   const handleTestCreated = useCallback(() => {
     setRefreshKey((k) => k + 1);
@@ -54,6 +61,30 @@ export function OverviewPage() {
 
   const formatDate = (d: Date | null) => (d ? d.toLocaleString() : "-");
 
+  const filteredTests = useMemo(() => {
+    return tests.filter((t) => {
+      // Search filter
+      if (search) {
+        const lowerSearch = search.toLowerCase();
+        if (!t.name.toLowerCase().includes(lowerSearch)) {
+          return false;
+        }
+      }
+      // External/Internal filter
+      if (externalFilter !== "all") {
+        try {
+          const parameters: TestParams = JSON.parse(t.params);
+          const external = isTestExternal(parameters);
+          if (externalFilter === "external" && !external) return false;
+          if (externalFilter === "internal" && external) return false;
+        } catch {
+          return externalFilter === "internal";
+        }
+      }
+      return true;
+    });
+  }, [tests, search, externalFilter]);
+
   const handleAuthKeySaved = useCallback(() => {
     setShowAuthDialog(false);
     setRefreshKey((k) => k + 1);
@@ -76,6 +107,38 @@ export function OverviewPage() {
         <NewTestDialog onTestCreated={handleTestCreated} />
       </div>
 
+      <div className="flex items-center gap-4">
+        <SearchInput
+          value={search}
+          onChange={setSearch}
+          placeholder="Search tests…"
+          className="w-64"
+        />
+        <div className="flex gap-1">
+          <Button
+            variant={externalFilter === "all" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setExternalFilter("all")}
+          >
+            All
+          </Button>
+          <Button
+            variant={externalFilter === "internal" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setExternalFilter("internal")}
+          >
+            Internal
+          </Button>
+          <Button
+            variant={externalFilter === "external" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setExternalFilter("external")}
+          >
+            External
+          </Button>
+        </div>
+      </div>
+
       <div>
         {loading && <p>Loading tests…</p>}
         {error && <p className="text-red-600">Error: {error}</p>}
@@ -85,15 +148,17 @@ export function OverviewPage() {
               <thead className="bg-gray-50">
               <tr>
                 <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Test Name (machine)</th>
+                <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Type</th>
                 <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Started</th>
                 <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Finished</th>
                 <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Planned test time (real)</th>
               </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-              {tests.map((t) => {
+              {filteredTests.map((t) => {
                   try {
                     const parameters: TestParams = JSON.parse(t.params);
+                    const external = isTestExternal(parameters);
                     let realTime = 0;
                     if (t.startedAt && t.finishedAt) {
                       realTime = Math.max(0, Math.round((t.finishedAt.getTime() - t.startedAt.getTime()) / 1000))
@@ -108,6 +173,11 @@ export function OverviewPage() {
                           {t.name} ({parameters.runsOn})</a>
                           <a className="px-2 text-blue-600 hover:underline" href={getGrafanaLink(t)}>🔗 Grafana</a>
                         </td>
+                        <td className="px-4 py-2 text-sm">
+                          <Badge variant={external ? "default" : "secondary"}>
+                            {external ? "External" : "Internal"}
+                          </Badge>
+                        </td>
                         <td className="px-4 py-2 text-sm text-gray-700">{formatDate(t.startedAt)}</td>
                         <td className="px-4 py-2 text-sm text-gray-700">{formatDate(t.finishedAt)}</td>
                         <td className="px-4 py-2 text-sm text-gray-800">{parameters.testLength}s ({realTime}s)</td>
@@ -121,7 +191,7 @@ export function OverviewPage() {
                   }
                 }
               )}
-              {tests.length === 0 && (
+              {filteredTests.length === 0 && (
                 <tr>
                   <td colSpan={5} className="px-4 py-6 text-center text-sm text-gray-500">
                     No tests found

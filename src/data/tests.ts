@@ -5,6 +5,12 @@ export type TestParams = {
     arkivOpGeth: string;
     blockLimit: number;
     testScenario: string;
+    isExternal?: boolean;
+    externalRpcUrl?: string;
+}
+
+export function isTestExternal(params: TestParams): boolean {
+    return params.isExternal === true || !!params.externalRpcUrl;
 }
 
 export type TestType = {
