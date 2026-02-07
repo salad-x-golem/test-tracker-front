@@ -346,10 +346,32 @@ const TestPage: React.FC = () => {
         const estimatedTime = getEstimatedTime(test, params);
 
         return <div style={styles.body}>
+
             <div style={styles.row}>
                 <span style={styles.label}>Name</span>
                 <span style={styles.value}>{test.name}</span>
             </div>
+            {params.isExternal || (
+                <div style={styles.row}>
+                    <span style={styles.label}>Grafana link</span>
+                    <span style={styles.value}><a
+                        href={getGrafanaLink(test)}
+                        style={{
+                            marginLeft: 12,
+                            color: '#2563eb',
+                            textDecoration: 'none',
+                            fontSize: 13,
+                            fontWeight: 500,
+                            display: 'inline-block',
+                            marginTop: 8,
+                            marginRight: 8
+                        }}
+                    >
+                    Grafana
+                </a></span>
+                </div>
+
+            )}
             <div style={styles.row}>
                 <span style={styles.label}>ID</span>
                 <span style={styles.value}>{test.id}</span>
@@ -410,23 +432,7 @@ const TestPage: React.FC = () => {
                             {status.label}
                         </span>
                     )}
-                    {test && (
-                        <a
-                            href={getGrafanaLink(test)}
-                            style={{
-                                marginLeft: 12,
-                                color: '#2563eb',
-                                textDecoration: 'none',
-                                fontSize: 13,
-                                fontWeight: 500,
-                                display: 'inline-block',
-                                marginTop: 8,
-                                marginRight: 8
-                            }}
-                        >
-                            Grafana
-                        </a>
-                    )}
+
                 </div>
 
                 {test && getInnerTestDom(test)}
