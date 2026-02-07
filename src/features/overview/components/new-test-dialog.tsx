@@ -35,14 +35,10 @@ function getSavedWorker(): string {
   return "zeus";
 }
 
-function workerToFormValue(worker: string): string {
-  return `["${worker}"]`;
-}
-
 function getDefaults(external: boolean, worker: string) {
   const base = {
     timeoutMinutes: "5",
-    workers: workerToFormValue(worker),
+    worker: worker,
     testLength: 60,
     testScenario: "dc_write_only",
     testUsers: 20,
@@ -82,7 +78,7 @@ export function NewTestDialog({onTestCreated}: { onTestCreated?: () => void }) {
   const handleWorkerChange = (worker: string) => {
     setSelectedWorker(worker);
     try { localStorage.setItem(LS_KEY, worker); } catch { /* ignore */ }
-    handleChange("workers", workerToFormValue(worker));
+    handleChange("worker", worker);
   };
 
   const handleTestTypeChange = (external: boolean) => {
