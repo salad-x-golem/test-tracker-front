@@ -1,6 +1,7 @@
 import { LayoutDashboard, Server } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { AdminKeyDialog } from "@/components/admin-key-dialog";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -53,7 +54,10 @@ export function AppLayout({ children }: AppLayoutProps) {
         {/* Footer */}
         <div className="flex items-center justify-between border-t p-4">
           <p className="text-xs text-muted-foreground">© 2025 Salad x Golem</p>
-          <ThemeToggle />
+          <div className="flex items-center gap-1">
+            <AdminKeyDialog />
+            <ThemeToggle />
+          </div>
         </div>
       </aside>
 

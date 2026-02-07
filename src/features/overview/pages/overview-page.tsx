@@ -1,6 +1,7 @@
 import {useCallback, useEffect, useState} from "react";
 import {getGrafanaLink, type TestParams, type TestType} from "@/data/tests.ts";
 import {NewTestDialog} from "@/features/overview/components/new-test-dialog.tsx";
+import {fetchWithAuth} from "@/lib/fetch-with-auth.ts";
 
 
 export function OverviewPage() {
@@ -21,7 +22,7 @@ export function OverviewPage() {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(url, {signal: controller.signal});
+        const res = await fetchWithAuth(url, {signal: controller.signal});
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         const parsed: TestType[] = (Array.isArray(data) ? data : []).map((item: Record<string, unknown>) => ({

@@ -2,6 +2,7 @@ import {useParams, useNavigate} from 'react-router-dom';
 import {getGrafanaLink, type TestParams} from "@/data/tests.ts";
 import {useCallback, useEffect, useState} from "react";
 import {JsonViewer} from "@/components/ui/json-viewer.tsx";
+import {fetchWithAuth} from "@/lib/fetch-with-auth.ts";
 
 type FileType = {
     id: number;
@@ -34,7 +35,7 @@ const TestPage: React.FC = () => {
         }
         setError(null);
         try {
-            const res = await fetch(url, {signal: controller?.signal});
+            const res = await fetchWithAuth(url, {signal: controller?.signal});
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const item = await res.json();
             const parsed: TestType = {
