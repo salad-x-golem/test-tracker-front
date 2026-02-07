@@ -4,6 +4,7 @@ import {useCallback, useEffect, useState} from "react";
 import {JsonViewer} from "@/components/ui/json-viewer.tsx";
 import {fetchWithAuth} from "@/lib/fetch-with-auth.ts";
 import {AdminKeyDialog} from "@/components/admin-key-dialog.tsx";
+import {formatFileSize} from "@/lib/utils.ts";
 
 type FileType = {
     id: number;
@@ -11,6 +12,7 @@ type FileType = {
     originalName: string;
     path: string;
     testId: number;
+    fileSize: number;
 };
 
 type TestType = {
@@ -249,6 +251,12 @@ const TestPage: React.FC = () => {
             fontSize: 13,
             fontWeight: 500,
         },
+        fileSize: {
+            color: '#6b7280',
+            fontSize: 12,
+            fontWeight: 400,
+            marginLeft: 4,
+        },
         viewLink: {
             color: '#2563eb',
             textDecoration: 'none',
@@ -308,12 +316,13 @@ const TestPage: React.FC = () => {
     }
 
     const renderFile = (file: FileType) => {
+        const sizeLabel = file.fileSize != null ? `(${formatFileSize(file.fileSize)})` : '';
         if (file.originalName.endsWith(".html")
             || file.originalName.endsWith(".json")
             || file.originalName.endsWith(".log")
         ) {
             return <li key={file.id} style={styles.fileItem}>
-                <span style={styles.fileName}>{file.originalName}</span>
+                <span style={styles.fileName}>{file.originalName}<span style={styles.fileSize}>{sizeLabel}</span></span>
                 <div>
                     <a href={getViewUrl(file.uid)} style={styles.viewLink}>
                         View
@@ -325,7 +334,7 @@ const TestPage: React.FC = () => {
             </li>
         }
         return <li key={file.id} style={styles.fileItem}>
-            <span style={styles.fileName}>{file.originalName}</span>
+            <span style={styles.fileName}>{file.originalName}<span style={styles.fileSize}>{sizeLabel}</span></span>
             <a href={getDownloadUrl(file.id)} style={styles.downloadLink} download>
                 Download
             </a>
