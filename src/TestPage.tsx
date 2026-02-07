@@ -12,7 +12,7 @@ type FileType = {
     originalName: string;
     path: string;
     testId: number;
-    fileSize: number;
+    size: number;
 };
 
 type TestType = {
@@ -316,7 +316,7 @@ const TestPage: React.FC = () => {
     }
 
     const renderFile = (file: FileType) => {
-        const sizeLabel = file.fileSize != null ? `(${formatFileSize(file.fileSize)})` : '';
+        const sizeLabel = file.size != null ? `(${formatFileSize(file.size)})` : '';
         if (file.originalName.endsWith(".html")
             || file.originalName.endsWith(".json")
             || file.originalName.endsWith(".log")
