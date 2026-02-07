@@ -14,23 +14,46 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
-const DEFAULT_FORM_VALUES = {
-  runsOn: "",
-  testLength: 300,
-  blockEvery: 5,
-  arkivOpGeth: "",
-  blockLimit: 100,
-  testScenario: "",
+const INTERNAL_DEFAULTS = {
+  timeoutMinutes: "5",
+  workers: '["zeus"]',
+  arkivOpGeth: "v1.101605.0-1.2",
+  testLength: 60,
+  blockEvery: 1,
+  blockLimit: 60000000,
+  testScenario: "dc_write_only",
+  testUsers: 20,
+  isExternal: false as const,
 };
+
+const EXTERNAL_DEFAULTS = {
+  timeoutMinutes: "5",
+  workers: '["zeus"]',
+  testLength: 60,
+  testScenario: "dc_write_only",
+  testUsers: 20,
+  isExternal: true as const,
+  externalRpcUrl: "https://kaolin.hoodi.arkiv.network/rpc",
+};
+
+type InternalFormData = typeof INTERNAL_DEFAULTS;
+type ExternalFormData = typeof EXTERNAL_DEFAULTS;
+type FormData = InternalFormData | ExternalFormData;
 
 export function NewTestDialog({onTestCreated}: { onTestCreated?: () => void }) {
   const [open, setOpen] = useState(false);
-  const [formData, setFormData] = useState(DEFAULT_FORM_VALUES);
+  const [isExternal, setIsExternal] = useState(false);
+  const [formData, setFormData] = useState<FormData>(INTERNAL_DEFAULTS);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleChange = (field: string, value: string | number) => {
     setFormData((prev) => ({...prev, [field]: value}));
+  };
+
+  const handleTestTypeChange = (external: boolean) => {
+    setIsExternal(external);
+    setFormData(external ? {...EXTERNAL_DEFAULTS} : {...INTERNAL_DEFAULTS});
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -39,7 +62,7 @@ export function NewTestDialog({onTestCreated}: { onTestCreated?: () => void }) {
     setError(null);
 
     try {
-      const res = await fetchWithAuth("https://tracker.arkiv-global.net/public/test/new", {
+      const res = await fetchWithAuth("https://tracker.arkiv-global.net/public/test/run", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify(formData),
@@ -48,7 +71,7 @@ export function NewTestDialog({onTestCreated}: { onTestCreated?: () => void }) {
         const text = await res.text();
         throw new Error(text || `HTTP ${res.status}`);
       }
-      setFormData(DEFAULT_FORM_VALUES);
+      setFormData(isExternal ? {...EXTERNAL_DEFAULTS} : {...INTERNAL_DEFAULTS});
       setOpen(false);
       onTestCreated?.();
     } catch (err: unknown) {
@@ -73,17 +96,57 @@ export function NewTestDialog({onTestCreated}: { onTestCreated?: () => void }) {
             Configure and start a new test run.
           </DialogDescription>
         </DialogHeader>
+        <div className="flex gap-2 py-2">
+          <Button
+            type="button"
+            variant={!isExternal ? "default" : "outline"}
+            onClick={() => handleTestTypeChange(false)}
+            className="flex-1"
+          >
+            Internal
+          </Button>
+          <Button
+            type="button"
+            variant={isExternal ? "default" : "outline"}
+            onClick={() => handleTestTypeChange(true)}
+            className="flex-1"
+          >
+            External
+          </Button>
+        </div>
         <form onSubmit={handleSubmit} className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="runsOn" className="text-right">Runs On</Label>
+            <Label htmlFor="timeoutMinutes" className="text-right">Timeout (min)</Label>
             <Input
-              id="runsOn"
-              value={formData.runsOn}
-              onChange={(e) => handleChange("runsOn", e.target.value)}
+              id="timeoutMinutes"
+              value={formData.timeoutMinutes}
+              onChange={(e) => handleChange("timeoutMinutes", e.target.value)}
               className="col-span-3"
               required
             />
           </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="workers" className="text-right">Workers</Label>
+            <Input
+              id="workers"
+              value={formData.workers}
+              onChange={(e) => handleChange("workers", e.target.value)}
+              className="col-span-3"
+              required
+            />
+          </div>
+          {!isExternal && (
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="arkivOpGeth" className="text-right">Arkiv Op Geth</Label>
+              <Input
+                id="arkivOpGeth"
+                value={(formData as InternalFormData).arkivOpGeth}
+                onChange={(e) => handleChange("arkivOpGeth", e.target.value)}
+                className="col-span-3"
+                required
+              />
+            </div>
+          )}
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="testLength" className="text-right">Test Length (s)</Label>
             <Input
@@ -95,38 +158,32 @@ export function NewTestDialog({onTestCreated}: { onTestCreated?: () => void }) {
               required
             />
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="blockEvery" className="text-right">Block Every</Label>
-            <Input
-              id="blockEvery"
-              type="number"
-              value={formData.blockEvery}
-              onChange={(e) => handleChange("blockEvery", Number(e.target.value))}
-              className="col-span-3"
-              required
-            />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="arkivOpGeth" className="text-right">Arkiv Op Geth</Label>
-            <Input
-              id="arkivOpGeth"
-              value={formData.arkivOpGeth}
-              onChange={(e) => handleChange("arkivOpGeth", e.target.value)}
-              className="col-span-3"
-              required
-            />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="blockLimit" className="text-right">Block Limit</Label>
-            <Input
-              id="blockLimit"
-              type="number"
-              value={formData.blockLimit}
-              onChange={(e) => handleChange("blockLimit", Number(e.target.value))}
-              className="col-span-3"
-              required
-            />
-          </div>
+          {!isExternal && (
+            <>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="blockEvery" className="text-right">Block Every</Label>
+                <Input
+                  id="blockEvery"
+                  type="number"
+                  value={(formData as InternalFormData).blockEvery}
+                  onChange={(e) => handleChange("blockEvery", Number(e.target.value))}
+                  className="col-span-3"
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="blockLimit" className="text-right">Block Limit</Label>
+                <Input
+                  id="blockLimit"
+                  type="number"
+                  value={(formData as InternalFormData).blockLimit}
+                  onChange={(e) => handleChange("blockLimit", Number(e.target.value))}
+                  className="col-span-3"
+                  required
+                />
+              </div>
+            </>
+          )}
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="testScenario" className="text-right">Test Scenario</Label>
             <Input
@@ -137,12 +194,35 @@ export function NewTestDialog({onTestCreated}: { onTestCreated?: () => void }) {
               required
             />
           </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="testUsers" className="text-right">Test Users</Label>
+            <Input
+              id="testUsers"
+              type="number"
+              value={formData.testUsers}
+              onChange={(e) => handleChange("testUsers", Number(e.target.value))}
+              className="col-span-3"
+              required
+            />
+          </div>
+          {isExternal && (
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="externalRpcUrl" className="text-right">External RPC URL</Label>
+              <Input
+                id="externalRpcUrl"
+                value={(formData as ExternalFormData).externalRpcUrl}
+                onChange={(e) => handleChange("externalRpcUrl", e.target.value)}
+                className="col-span-3"
+                required
+              />
+            </div>
+          )}
           {error && (
             <p className="text-sm text-destructive">{error}</p>
           )}
           <DialogFooter>
             <Button type="submit" disabled={submitting}>
-              {submitting ? "Creating…" : "Create Test"}
+              {submitting ? "Creating…" : "Run Test"}
             </Button>
           </DialogFooter>
         </form>
