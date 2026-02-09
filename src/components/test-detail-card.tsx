@@ -142,7 +142,7 @@ function renderFile(file: FileType) {
     }
     return <li key={file.id} style={styles.fileItem}>
         <span style={styles.fileName}>{file.originalName}<span style={styles.fileSize}>{sizeLabel}</span></span>
-        <a href={getDownloadUrl(file.id)} style={styles.downloadLink} download>
+        <a href={getDownloadUrl(file.uid)} style={styles.downloadLink} download>
             Download
         </a>
     </li>
