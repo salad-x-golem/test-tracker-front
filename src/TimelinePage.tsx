@@ -1,15 +1,15 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { type TestType } from "@/data/tests.ts";
-import { fetchWithAuth } from "@/lib/fetch-with-auth.ts";
-import { AdminKeyDialog } from "@/components/admin-key-dialog.tsx";
-import { Badge } from "@/components/ui/badge.tsx";
+import {useCallback, useEffect, useMemo, useState} from "react";
+import {type TestType} from "@/data/tests.ts";
+import {fetchWithAuth} from "@/lib/fetch-with-auth.ts";
+import {AdminKeyDialog} from "@/components/admin-key-dialog.tsx";
+import {Badge} from "@/components/ui/badge.tsx";
 
 const LANE_COLORS = [
-  { bg: "bg-blue-500", text: "text-white" },
-  { bg: "bg-emerald-500", text: "text-white" },
-  { bg: "bg-amber-500", text: "text-white" },
-  { bg: "bg-purple-500", text: "text-white" },
-  { bg: "bg-rose-500", text: "text-white" },
+  {bg: "bg-blue-500", text: "text-white"},
+  {bg: "bg-emerald-500", text: "text-white"},
+  {bg: "bg-amber-500", text: "text-white"},
+  {bg: "bg-purple-500", text: "text-white"},
+  {bg: "bg-rose-500", text: "text-white"},
 ];
 
 function formatDuration(ms: number): string {
@@ -24,11 +24,11 @@ function formatDuration(ms: number): string {
 }
 
 function formatTime(d: Date): string {
-  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  return d.toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"});
 }
 
 function formatDate(d: Date): string {
-  return d.toLocaleDateString([], { month: "short", day: "numeric" });
+  return d.toLocaleDateString([], {month: "short", day: "numeric"});
 }
 
 const TimelinePage: React.FC = () => {
@@ -44,7 +44,7 @@ const TimelinePage: React.FC = () => {
       if (isInitialLoad) setLoading(true);
       setError(null);
       try {
-        const res = await fetchWithAuth(url, { signal: controller?.signal });
+        const res = await fetchWithAuth(url, {signal: controller?.signal});
         if (res.status === 401) {
           setShowAuthDialog(true);
           if (isInitialLoad) setLoading(false);
@@ -66,7 +66,14 @@ const TimelinePage: React.FC = () => {
             params: String(item.params ?? ""),
           })
         );
-        setTests(parsed);
+        // filter out tests older than 1 day to avoid clutter
+        const freshTestList = parsed.filter((t) => {
+          const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+          const started = t.startedAt ? t.startedAt.getTime() : 0;
+          const finished = t.finishedAt ? t.finishedAt.getTime() : 0;
+          return started >= cutoff || finished >= cutoff;
+        });
+        setTests(freshTestList);
       } catch (err: unknown) {
         if (err instanceof Error && err.name !== "AbortError") {
           setError(err.message ?? "Failed to load tests");
@@ -106,9 +113,9 @@ const TimelinePage: React.FC = () => {
   }, [tests]);
 
   // Compute global time range for the visible tests
-  const { timeMin, totalMs } = useMemo(() => {
+  const {timeMin, totalMs} = useMemo(() => {
     if (timelineTests.length === 0)
-      return { timeMin: 0, timeMax: 1, totalMs: 1 };
+      return {timeMin: 0, timeMax: 1, totalMs: 1};
     const now = Date.now();
     const starts = timelineTests.map((t) => t.startedAt!.getTime());
     const ends = timelineTests.map((t) =>
@@ -117,7 +124,7 @@ const TimelinePage: React.FC = () => {
     const min = Math.min(...starts);
     const max = Math.max(...ends);
     const range = max - min || 1;
-    return { timeMin: min, timeMax: max, totalMs: range };
+    return {timeMin: min, timeMax: max, totalMs: range};
   }, [timelineTests]);
 
   // Assign each test to a lane (row) to avoid overlaps, up to 5 lanes
@@ -232,9 +239,10 @@ const TimelinePage: React.FC = () => {
               {lanesData.map((lane, laneIdx) => (
                 <div key={laneIdx} className="relative h-12">
                   {/* Lane background */}
-                  <div className="absolute inset-0 rounded bg-muted/30" />
+                  <div className="absolute inset-0 rounded bg-muted/30"/>
                   {/* Lane label */}
-                  <div className="absolute left-0 top-0 bottom-0 flex items-center pl-2 text-xs text-muted-foreground font-medium z-10">
+                  <div
+                    className="absolute left-0 top-0 bottom-0 flex items-center pl-2 text-xs text-muted-foreground font-medium z-10">
                     Lane {laneIdx + 1}
                   </div>
                   {/* Test bars */}
@@ -281,9 +289,9 @@ const TimelinePage: React.FC = () => {
                 <div
                   key={i}
                   className="absolute top-0 flex flex-col items-center"
-                  style={{ left: `${tick.pos}%`, transform: "translateX(-50%)" }}
+                  style={{left: `${tick.pos}%`, transform: "translateX(-50%)"}}
                 >
-                  <div className="h-2 w-px bg-muted-foreground/40" />
+                  <div className="h-2 w-px bg-muted-foreground/40"/>
                   <span className="text-[10px] text-muted-foreground mt-0.5 whitespace-nowrap">
                     {spansMultipleDays && formatDate(tick.date) + " "}
                     {tick.label}
