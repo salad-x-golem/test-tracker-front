@@ -1,20 +1,18 @@
-import {useParams, useNavigate} from 'react-router-dom';
 import {useCallback, useEffect, useState} from "react";
+import {type TestParams} from "@/data/tests.ts";
 import {fetchWithAuth} from "@/lib/fetch-with-auth.ts";
 import {AdminKeyDialog} from "@/components/admin-key-dialog.tsx";
 import {TestDetailCard, type TestWithFiles} from "@/components/test-detail-card.tsx";
 
-const TestPage: React.FC = () => {
-    const {testName} = useParams();
-    const navigate = useNavigate();
-    const [test, setTest] = useState<TestWithFiles | null>(null);
+const DetailsPage: React.FC = () => {
+    const [recentTests, setRecentTests] = useState<TestWithFiles[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [showAuthDialog, setShowAuthDialog] = useState(false);
     const [refreshKey, setRefreshKey] = useState(0);
 
-    const fetchTestData = useCallback(async (controller?: AbortController, isInitialLoad = false) => {
-        const url = `https://tracker.arkiv-global.net/public/test/${testName}/info`;
+    const fetchRecentTests = useCallback(async (controller?: AbortController, isInitialLoad = false) => {
+        const url = "https://tracker.arkiv-global.net/public/test/list";
         if (isInitialLoad) {
             setLoading(true);
         }
@@ -27,17 +25,17 @@ const TestPage: React.FC = () => {
                 return;
             }
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            const item = await res.json();
-            const parsed: TestWithFiles = {
+            const data = await res.json();
+            const parsed: TestWithFiles[] = (Array.isArray(data) ? data : []).map((item: Record<string, unknown>) => ({
                 id: Number(item.id),
                 name: String(item.name ?? ""),
-                createdAt: new Date(item.createdAt),
-                startedAt: item.startedAt ? new Date(item.startedAt) : null,
-                finishedAt: item.finishedAt ? new Date(item.finishedAt) : null,
-                params: String(item.parameters ?? ""),
+                createdAt: new Date(item.createdAt as string | number | Date),
+                startedAt: item.startedAt ? new Date(item.startedAt as string | number | Date) : null,
+                finishedAt: item.finishedAt ? new Date(item.finishedAt as string | number | Date) : null,
+                params: String(item.params ?? ""),
                 files: Array.isArray(item.files) ? item.files : [],
-            };
-            setTest(parsed);
+            }));
+            setRecentTests(parsed.slice(0, 5));
         } catch (err: unknown) {
             if (err instanceof Error && err.name !== "AbortError") {
                 setError(err.message ?? "Failed to load tests");
@@ -47,36 +45,32 @@ const TestPage: React.FC = () => {
                 setLoading(false);
             }
         }
-    }, [testName]);
+    }, []);
 
     useEffect(() => {
         const controller = new AbortController();
-        fetchTestData(controller, true);
+        fetchRecentTests(controller, true);
         return () => controller.abort();
-    }, [testName, fetchTestData, refreshKey]);
+    }, [fetchRecentTests, refreshKey]);
 
     useEffect(() => {
         const intervalId = setInterval(() => {
-            fetchTestData();
-        },5000);
+            fetchRecentTests();
+        }, 5000);
 
         return () => clearInterval(intervalId);
-    }, [testName, fetchTestData]);
+    }, [fetchRecentTests]);
 
     const handleAuthKeySaved = useCallback(() => {
         setShowAuthDialog(false);
         setRefreshKey((k) => k + 1);
     }, []);
 
-    const getStatus = () => {
-        if (!test) return null;
-        if (test.finishedAt) return {label: 'Completed', color: '#065f46', bg: '#ecfdf5', border: '#a7f3d0'};
-        if (test.startedAt) return {label: 'Running', color: '#92400e', bg: '#fffbeb', border: '#fde68a'};
+    const getTestStatus = (t: TestWithFiles) => {
+        if (t.finishedAt) return {label: 'Completed', color: '#065f46', bg: '#ecfdf5', border: '#a7f3d0'};
+        if (t.startedAt) return {label: 'Running', color: '#92400e', bg: '#fffbeb', border: '#fde68a'};
         return {label: 'Pending', color: '#374151', bg: '#f9fafb', border: '#e5e7eb'};
     };
-
-    const status = getStatus();
-    const displayName = testName ? decodeURIComponent(testName) : 'No testName provided';
 
     const styles = {
         container: {
@@ -88,7 +82,7 @@ const TestPage: React.FC = () => {
         },
         card: {
             maxWidth: 720,
-            margin: '0 auto',
+            margin: '0 auto 16px',
             background: '#ffffff',
             borderRadius: 8,
             border: '1px solid #e5e7eb',
@@ -115,17 +109,12 @@ const TestPage: React.FC = () => {
             marginTop: 12,
             border: `1px solid ${border}`,
         }),
-        button: {
-            width: '100%',
-            padding: '10px 16px',
-            background: '#1f2937',
-            color: '#ffffff',
-            border: 'none',
-            borderRadius: 6,
-            fontSize: 14,
-            fontWeight: 500,
-            cursor: 'pointer',
-            marginTop: 16,
+        pageTitle: {
+            maxWidth: 720,
+            margin: '0 auto 24px',
+            fontSize: 24,
+            fontWeight: 700,
+            color: '#111827',
         },
         loader: {
             textAlign: 'center' as const,
@@ -160,7 +149,7 @@ const TestPage: React.FC = () => {
             <div style={styles.container}>
                 {authDialog}
                 <div style={styles.loader}>
-                    Loading test data...
+                    Loading tests...
                 </div>
             </div>
         );
@@ -172,9 +161,6 @@ const TestPage: React.FC = () => {
                 {authDialog}
                 <div style={styles.error}>
                     <strong>Error:</strong> {error}
-                    <button style={{...styles.button, marginTop: 16}} onClick={() => navigate(-1)}>
-                        Go Back
-                    </button>
                 </div>
             </div>
         );
@@ -183,23 +169,42 @@ const TestPage: React.FC = () => {
     return (
         <div style={styles.container}>
             {authDialog}
-            <div style={styles.card}>
-                <div style={styles.header}>
-                    <h1 style={styles.title}>{displayName}</h1>
-                    <p style={styles.subtitle}>Test #{test?.id}</p>
-
-                    {status && (
-                        <span style={styles.badge(status.bg, status.color, status.border)}>
-                            {status.label}
-                        </span>
-                    )}
-
-                </div>
-
-                {test && <TestDetailCard test={test}/>}
-            </div>
+            <h1 style={styles.pageTitle}>Last 5 Tests</h1>
+            {recentTests.length === 0 && (
+                <div style={styles.loader}>No tests found</div>
+            )}
+            {recentTests.map((t) => {
+                const tStatus = getTestStatus(t);
+                let tParams: TestParams | null = null;
+                try {
+                    tParams = t.params ? JSON.parse(t.params) : null;
+                } catch {
+                    // ignore parse errors
+                }
+                const isExternal = tParams?.isExternal === true || !!tParams?.externalRpcUrl;
+                return (
+                    <div key={t.id} style={styles.card}>
+                        <div style={styles.header}>
+                            <h1 style={styles.title}>
+                                <a href={"/test/" + encodeURIComponent(t.name)}
+                                   style={{color: '#2563eb', textDecoration: 'none'}}>
+                                    {t.name}
+                                </a>
+                            </h1>
+                            <p style={styles.subtitle}>
+                                Test #{t.id}
+                                {isExternal ? ' · External' : ' · Internal'}
+                            </p>
+                            <span style={styles.badge(tStatus.bg, tStatus.color, tStatus.border)}>
+                                {tStatus.label}
+                            </span>
+                        </div>
+                        <TestDetailCard test={t}/>
+                    </div>
+                );
+            })}
         </div>
     );
 };
 
-export default TestPage;
+export default DetailsPage;

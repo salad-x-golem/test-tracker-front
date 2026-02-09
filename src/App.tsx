@@ -3,6 +3,7 @@ import {AppLayout} from "@/components/layout";
 import {ThemeProvider} from "@/components/theme-provider";
 import {OverviewPage} from "@/features/overview";
 import TestPage from "@/TestPage.tsx";
+import DetailsPage from "@/DetailsPage.tsx";
 
 function App() {
     return (
@@ -11,6 +12,7 @@ function App() {
                 <AppLayout>
                     <Routes>
                         <Route path="/" element={<OverviewPage/>}/>
+                        <Route path="/details" element={<DetailsPage/>}/>
                         <Route path="/test/:testName"
                                element={<TestPage/>}>
 
