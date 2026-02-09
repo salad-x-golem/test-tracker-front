@@ -37,7 +37,6 @@ function getSavedWorker(): string {
 
 function getDefaults(external: boolean, worker: string) {
   const base = {
-    timeoutMinutes: "5",
     worker: worker,
     testLength: 60,
     testScenario: "dc_write_only",
@@ -92,10 +91,11 @@ export function NewTestDialog({onTestCreated}: { onTestCreated?: () => void }) {
     setError(null);
 
     try {
+      const timeoutMinutes = Math.ceil(formData.testLength / 60) + 5;
       const res = await fetchWithAuth("https://tracker.arkiv-global.net/public/test/run", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
-        body: JSON.stringify(formData),
+        body: JSON.stringify({...formData, timeoutMinutes: String(timeoutMinutes)}),
       });
       if (!res.ok) {
         const text = await res.text();
@@ -145,16 +145,6 @@ export function NewTestDialog({onTestCreated}: { onTestCreated?: () => void }) {
           </Button>
         </div>
         <form onSubmit={handleSubmit} className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="timeoutMinutes" className="text-right">Timeout (min)</Label>
-            <Input
-              id="timeoutMinutes"
-              value={formData.timeoutMinutes}
-              onChange={(e) => handleChange("timeoutMinutes", e.target.value)}
-              className="col-span-3"
-              required
-            />
-          </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="workers" className="text-right">Workers</Label>
             <Select value={selectedWorker} onValueChange={handleWorkerChange}>
