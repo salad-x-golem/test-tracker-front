@@ -1,4 +1,4 @@
-import { LayoutDashboard, Server } from "lucide-react";
+import { GanttChart, LayoutDashboard, Server } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { AdminKeyDialog } from "@/components/admin-key-dialog";
@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { to: "/", label: "History", icon: LayoutDashboard },
   { to: "/details", label: "Details", icon: Server },
+  { to: "/timeline", label: "Timeline", icon: GanttChart },
 ];
 
 interface AppLayoutProps {
