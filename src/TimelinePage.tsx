@@ -68,7 +68,7 @@ const TimelinePage: React.FC = () => {
         );
         // filter out tests older than 1 day to avoid clutter
         const freshTestList = parsed.filter((t) => {
-          const cutoff = Date.now() - 12 * 60 * 60 * 1000;
+          const cutoff = Date.now() - 8 * 60 * 60 * 1000;
           const started = t.startedAt ? t.startedAt.getTime() : 0;
           const finished = t.finishedAt ? t.finishedAt.getTime() : 0;
           return started >= cutoff || finished >= cutoff;
