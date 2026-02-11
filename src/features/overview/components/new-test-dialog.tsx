@@ -51,8 +51,8 @@ function getDefaults(external: boolean, worker: string) {
   }
   return {
     ...base,
-    arkivOpGeth: "v1.101605.0-1.2",
-    blockEvery: 1,
+    arkivOpGeth: "v1.101605.0-metrics.2",
+    blockEvery: 2,
     blockLimit: 60000000,
     isExternal: false as const,
   };
