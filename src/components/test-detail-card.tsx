@@ -114,7 +114,7 @@ function getEstimatedTime(test: TestWithFiles, params: TestParams) {
     }
 
     const elapsedFromCreate = (Date.now() - new Date(test.createdAt).getTime()) / 1000;
-    const elapsedFromCreateEst = 65 - elapsedFromCreate;
+    const elapsedFromCreateEst = 115 - elapsedFromCreate;
     if (elapsedFromCreateEst >= 0) {
         return `~${formatDuration(elapsedFromCreateEst)} (estimated start)`;
     } else {
